@@ -18,16 +18,18 @@ body {
     align-items: center;
 }
 
+```css id="9lqv6i"
 .app-container {
     width: 100%;
     max-width: 450px;
     height: 100vh;
-    position: relative; /* <--- CÁI NÀY CỰC KỲ QUAN TRỌNG */
+    position: relative;
     overflow: hidden;
     background: #080c14;
     display: flex;
     flex-direction: column;
 }
+```
 
 /* HEADER ĐỈNH CAO */
 .app-header {
@@ -59,35 +61,37 @@ body {
 }
 
 /* VÙNG NỘI DUNG CUỘN ĐỘNG CHÍNH */
+```css
 .app-main {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 20px 90px 20px; /* Chừa khoảng trống dưới đáy để menu không đè chữ */
+    padding: 20px;
+    padding-bottom: 100px;
+    position: relative;
 }
+```
 
 /* ==========================================
    BẮT BUỘC: QUẢN LÝ ẨN HIỆN CÁC MÀN HÌNH
    ========================================== */
 /* Ép toàn bộ màn hình vào một cái khung cố định */
+```css id="tqk8o0"
 .man-hinh {
-    display: none !important; /* Mặc định là ẩn */
+    display: none;
     width: 100%;
-    height: 100%;            /* Chiều cao bằng đúng app-container */
-    position: absolute;      /* "Ghim" tại một chỗ */
-    top: 0;
-    left: 0;
-    overflow-y: auto;        /* Chỉ cuộn khi nội dung bên trong quá dài */
-    padding: 20px;
-    box-sizing: border-box;
-    z-index: 1;              /* Nằm dưới */
+    min-height: 100%;
+    padding: 20px 0;
+    animation: fadeIn 0.25s ease;
 }
 
-/* Chỉ hiện đúng cái thằng đang được chọn */
 .man-hinh.active {
     display: flex !important;
     flex-direction: column;
-    z-index: 10;             /* Đẩy thằng này lên trên cùng */
+    gap: 15px;
 }
+```
+
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
