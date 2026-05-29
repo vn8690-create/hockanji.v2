@@ -22,6 +22,12 @@ let indexTestHienTai = 0;
 let daBamDapAn = false;
 let tenFileHienTai = ''; 
 
+// --- BIẾN PHỤC VỤ CHIA NGÀY HỌC DÙNG CHUNG ---
+const WORDS_PER_DAY = 10;       // Mỗi ngày học 10 từ
+let dangHocTheoNgay = false;   // Trạng thái kiểm tra có đang học theo ngày không
+let duLieuCuaNgayHoc = [];     // Chứa mảng 10 từ sau khi cắt
+let mảngDữLiệuGốcĐãTải = [];  // Lưu tạm dữ liệu sau khi fetch về để cắt mảng
+
 // Kho từ nhiễu dự phòng chuẩn Nhật ngữ phòng khi file gốc quá ngắn
 const KHO_NHIEU_DU_PHONG = ["上手", "下手", "元気", "安全", "水分", "時間", "先生", "学生", "会社"];
 
@@ -47,15 +53,6 @@ function ChuyenTab(idManHinh) {
     if (idManHinh === 'man-kanji') document.getElementById('btn-nav-kanji')?.classList.add('active');
     if (idManHinh === 'man-test-levels') document.getElementById('btn-nav-test')?.classList.add('active');
     if (idManHinh === 'man-grammar-levels') document.getElementById('btn-nav-grammar')?.classList.add('active');
-}
-
-function ThoatHocChiTiet() {
-    ClearAllTimers();
-    if (loaiHocHienTai === 'grammar') {
-        ChuyenTab('man-grammar-levels');
-    } else {
-        ChuyenTab('man-kanji');
-    }
 }
 
 function ChonCapDoTest(capDo) {
@@ -102,6 +99,90 @@ function ThayDoiTrangThaiMute() {
 }
 
 // =========================================================================
+// HÀM MỞ MÀN HÌNH CHỌN NGÀY HỌC (DÙNG CHUNG CHO MỌI CẤP ĐỘ)
+// =========================================================================
+function MoChonNgay(capDo) {
+    // Đổi tiêu đề hiển thị theo cấp độ (Ví dụ: CHỌN NGÀY HỌC N5)
+    const txtTieuDe = document.getElementById('tieu-de-chon-ngay');
+    if (txtTieuDe) txtTieuDe.innerText = `CHỌN NGÀY HỌC ${capDo.toUpperCase()}`;
+
+    // Chuyển sang màn chọn ngày học
+    ChuyenTab('man-hinh-chon-ngay');
+
+    const vungChuaNut = document.getElementById('vung-chua-nut-ngay');
+    if (!vungChuaNut) return;
+    vungChuaNut.innerHTML = `<div style="color:#00ffcc; grid-column: span 4;">⚡ Đang quét tệp dữ liệu cấp độ...</div>`;
+
+    // Xác định đúng tên file json để tải về giống logic cũ của bro
+    let tenFileJson = capDo.toLowerCase(); 
+
+    // Tiến hành tải động file JSON về trước để đếm số lượng từ thực tế
+    fetch(`./${tenFileJson}.json?v=${new Date().getTime()}`)
+        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+        .then(data => {
+            mảngDữLiệuGốcĐãTải = data; // Lưu mảng gốc vào biến tạm
+            
+            const tongSoNgay = Math.ceil(mảngDữLiệuGốcĐãTải.length / WORDS_PER_DAY);
+            vungChuaNut.innerHTML = ''; // Xóa chữ loading
+
+            // Sinh nút ngày tự động dựa trên độ dài file JSON thật
+            for (let i = 1; i <= tongSoNgay; i++) {
+                const nutNgay = document.createElement('button');
+                nutNgay.innerText = `Ngày ${i}`;
+                nutNgay.style.cssText = `
+                    padding: 12px 5px; 
+                    background: rgba(0,255,204,0.1); 
+                    color: #00ffcc; 
+                    border: 1px solid #00ffcc; 
+                    cursor: pointer; 
+                    border-radius: 5px; 
+                    font-weight: bold; 
+                    text-shadow: 0 0 5px #00ffcc;
+                    box-shadow: 0 0 8px rgba(0,255,204,0.2);
+                    transition: all 0.2s;
+                `;
+                
+                nutNgay.onmouseenter = () => { nutNgay.style.background = '#00ffcc'; nutNgay.style.color = '#000'; };
+                nutNgay.onmouseleave = () => { nutNgay.style.background = 'rgba(0,255,204,0.1)'; nutNgay.style.color = '#00ffcc'; };
+                
+                // Sự kiện click học theo ngày
+                nutNgay.addEventListener('click', () => {
+                    const startIndex = (i - 1) * WORDS_PER_DAY;
+                    const endIndex = startIndex + WORDS_PER_DAY;
+                    
+                    // Cắt lấy 10 từ tương ứng của ngày đó
+                    duLieuCuaNgayHoc = mảngDữLiệuGốcĐãTải.slice(startIndex, endIndex);
+                    dangHocTheoNgay = true; // Bật cờ đánh chặn học theo ngày
+                    
+                    // Gọi hàm nạp dữ liệu gốc của bro để khởi tạo màn hình flashcard học chi tiết
+                    TaiDuLieuHoc('kanji', tenFileJson);
+                    
+                    // Đè tên tiêu đề hiển thị
+                    setTimeout(() => {
+                        const tieuDe = document.getElementById('tieu-de-bai-hoc');
+                        if (tieuDe) tieuDe.innerText = `${capDo.toUpperCase()} - KANJI NGÀY ${i}`;
+                    }, 150);
+                });
+                
+                vungChuaNut.appendChild(nutNgay);
+            }
+        })
+        .catch(() => {
+            vungChuaNut.innerHTML = `<div style="color:#ef4444; grid-column: span 4;">❌ Lỗi: Không quét được file "${tenFileJson}.json"!</div>`;
+        });
+}
+
+function ThoatHocChiTiet() {
+    ClearAllTimers();
+    dangHocTheoNgay = false; // Tắt trạng thái học theo ngày khi thoát ra ngoài
+    if (loaiHocHienTai === 'grammar') {
+        ChuyenTab('man-grammar-levels');
+    } else {
+        ChuyenTab('man-kanji');
+    }
+}
+
+// =========================================================================
 // TẢI DỮ LIỆU ĐỘNG CHO FLASHCARD HỌC
 // =========================================================================
 function TaiDuLieuHoc(loaiHoc, tenFile) {
@@ -130,13 +211,21 @@ function TaiDuLieuHoc(loaiHoc, tenFile) {
     if (vungChua) vungChua.innerHTML = `<div class="loading-text">⚡ Đang đồng bộ bộ não dữ liệu...</div>`;
     if (nutChuyen) nutChuyen.classList.add('an-giau');
 
+    // --- LOGIC ĐÁNH CHẶN THÔNG MINH CHO HỌC THEO NGÀY ---
+    if (dangHocTheoNgay) {
+        duLieuHienTai = duLieuCuaNgayHoc; // Ép app lấy đúng 10 từ vừa cắt thay vì load toàn bộ file
+        indexHienTai = 0; 
+        ChayDongThoiGianFlashcard();
+        return; // Thoát ra luôn, không chạy xuống đoạn fetch full file ở dưới nữa!
+    }
+
+    // Luồng học full toàn bộ file gốc như cũ của bro (không chia ngày)
     fetch(`./${tenFile}.json?v=${new Date().getTime()}`)
         .then(res => { if (!res.ok) throw new Error(); return res.json(); })
         .then(data => {
             duLieuHienTai = data; 
             let tienDoCu = parseInt(localStorage.getItem(`tien_do_${tenFileHienTai}`)) || 0;
 
-            // ĐÃ FIX: Sửa lỗi chính tả duLieluHienTai thành duLieuHienTai
             if (tienDoCu > 0 && tienDoCu < duLieuHienTai.length && vungChua && tieuDe) {
                 vungChua.innerHTML = `
                     <div class="the-cyber-card" style="text-align: center; padding: 40px 20px;">
@@ -198,7 +287,10 @@ function ChayDongThoiGianFlashcard() {
         return;
     }
 
-    localStorage.setItem(`tien_do_${tenFileHienTai}`, indexHienTai);
+    // Nếu học theo tiến độ ngày thì không lưu đè tiến độ tổng để tránh lỗi
+    if (!dangHocTheoNgay) {
+        localStorage.setItem(`tien_do_${tenFileHienTai}`, indexHienTai);
+    }
 
     if (tieuDe) tieuDe.innerText = `TIẾN ĐỘ: ${indexHienTai + 1} / ${duLieuHienTai.length}`;
     if (nutChuyen) nutChuyen.classList.add('an-giau');
@@ -617,80 +709,3 @@ window.addEventListener('DOMContentLoaded', () => {
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
 });
-
-// ==================== CỤM CODE MỚI CHIA NGÀY TỰ ĐỘNG KHÔNG LỖI ====================
-const WORDS_PER_DAY = 10;
-let dangHocN1TheoNgay = false;
-let duLieuN1CuaNgay = [];
-
-// Hàm mở màn hình chọn ngày học N1 và TỰ ĐỘNG SINH NÚT THEO ĐỘ DÀI KANJI THỰC TẾ
-function MoChonNgayN1() {
-    // 1. Chuyển tab sang màn hình chọn ngày học
-    ChuyenTab('man-hinh-chon-ngay');
-    
-    // 🕵️‍♂️ ĐOẠN KIỂM TRA THẦN THÁNH: Bro bật F12 trên trình duyệt xem nó in ra bao nhiêu chữ nhé!
-    console.log("Độ dài dữ liệu N1 hiện tại là:", n1_core ? n1_core.length : "Biến n1_core chưa tồn tại!");
-
-    // Nếu n1_core chưa load kịp, ta thử lấy từ hàm fetch hoặc biến dữ liệu gốc của bro
-    // Giả sử dữ liệu của bro nằm trong một biến khác hoặc cần kiểm tra:
-    if (!n1_core || n1_core.length === 0) {
-        alert("Bro ơi, dữ liệu Kanji N1 chưa load kịp hoặc biến n1_core đang bị rỗng rồi!");
-        return;
-    }
-    
-    // 2. Tính toán số ngày dựa trên độ dài thật
-    const tongSoNgay = Math.ceil(n1_core.length / WORDS_PER_DAY);
-    
-    const vungChuaNut = document.getElementById('vung-chua-nut-ngay');
-    if (!vungChuaNut) {
-        console.error("Không tìm thấy thẻ HTML có id là: vung-chua-nut-ngay");
-        return;
-    }
-    
-    // Xóa sạch nút cũ
-    vungChuaNut.innerHTML = '';
-    
-    // 3. Tiến hành sinh nút rực rỡ
-    for (let i = 1; i <= tongSoNgay; i++) {
-        const nutNgay = document.createElement('button');
-        nutNgay.className = 'day-btn'; // Gán class để dễ nhận diện nếu cần CSS
-        nutNgay.innerText = `Ngày ${i}`;
-        
-        // CSS Style trực tiếp cho nút hiển thị rực rỡ phong cách Cyber
-        nutNgay.style.cssText = `
-            padding: 12px 5px; 
-            background: rgba(0,255,204,0.1); 
-            color: #00ffcc; 
-            border: 1px solid #00ffcc; 
-            cursor: pointer; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            text-shadow: 0 0 5px #00ffcc;
-            box-shadow: 0 0 8px rgba(0,255,204,0.2);
-            transition: all 0.2s;
-        `;
-        
-        // Hiệu ứng hover nhẹ cho đặc vụ tăng trải nghiệm
-        nutNgay.onmouseenter = () => { nutNgay.style.background = '#00ffcc'; nutNgay.style.color = '#000'; };
-        nutNgay.onmouseleave = () => { nutNgay.style.background = 'rgba(0,255,204,0.1)'; nutNgay.style.color = '#00ffcc'; };
-        
-        // Sự kiện khi bấm vào nút ngày học
-        nutNgay.addEventListener('click', () => {
-            const startIndex = (i - 1) * WORDS_PER_DAY;
-            const endIndex = startIndex + WORDS_PER_DAY;
-            duLieuN1CuaNgay = n1_core.slice(startIndex, endIndex);
-            
-            dangHocN1TheoNgay = true;
-            
-            ChuyenTab('man-hoc-chi-tiet');
-            TaiDuLieuHoc('kanji', 'n1');
-            
-            setTimeout(() => {
-                const tieuDe = document.getElementById('tieu-de-bai-hoc');
-                if (tieuDe) tieuDe.innerText = `N1 - KANJI NGÀY ${i}`;
-            }, 150);
-        });
-        
-        vungChuaNut.appendChild(nutNgay);
-    }
-}
