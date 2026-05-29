@@ -222,7 +222,9 @@ function ChayDongThoiGianFlashcard() {
 
     const item = duLieuHienTai[indexHienTai];
 
-    // 1️⃣ XỬ LÝ MÀN HÌNH HỌC KANJI
+    // =========================================================================
+    // 1️⃣ XỬ LÝ MÀN HÌNH HỌC KANJI (ĐÃ THÊM BỘ LỌC THÔNG MINH CHO N5 VÀ N3/N2/N1)
+    // =========================================================================
     if (loaiHocHienTai === 'kanji') {
         const chuKanji = item.kanji || item.chu || "字";
         const nghiaGoc = item.meaning || item.nghia || "";
@@ -233,10 +235,20 @@ function ChayDongThoiGianFlashcard() {
         let amHanViet = "Chưa rõ";
         let nghiaTiengViet = nghiaGoc;
 
-        // Cơ chế chống bóc tách lỗi nếu trường meaning không chứa dấu ()
+        // Bắt đầu logic lọc thông minh để phân chia N5 và các level khác
         if (nghiaGoc.includes('(') && nghiaGoc.includes(')')) {
-            amHanViet = nghiaGoc.split('(')[0].trim();
-            nghiaTiengViet = nghiaGoc.substring(nghiaGoc.indexOf('(') + 1, nghiaGoc.indexOf(')')).trim();
+            let phanTuDau = nghiaGoc.split('(')[0].trim();
+            let phanTrongNgoac = nghiaGoc.substring(nghiaGoc.indexOf('(') + 1, nghiaGoc.indexOf(')')).trim();
+
+            // 🌟 NẾU LÀ N5: Chữ đầu viết HOA TOÀN BỘ (Ví dụ: MỘT) -> Đảo vị trí lại cho đúng giao diện
+            if (phanTuDau === phanTuDau.toUpperCase() && phanTuDau !== phanTuDau.toLowerCase()) {
+                nghiaTiengViet = phanTuDau;       // MỘT đưa về đúng ô Nghĩa
+                amHanViet = phanTrongNgoac;       // Nhất đưa về đúng ô Âm Hán
+            } else {
+                // 🌟 NẾU LÀ N3, N2, N1: Cấu trúc chuẩn chữ thường (Ví dụ: Nhất) -> Giữ nguyên logic gốc
+                amHanViet = phanTuDau;
+                nghiaTiengViet = phanTrongNgoac;
+            }
         } else if (item.han_viet) {
             amHanViet = item.han_viet;
         } else {
@@ -323,7 +335,6 @@ function ChayDongThoiGianFlashcard() {
         KichHoatTimeline(cauTruc, chuoiDocNguPhapViet, vdNhat);
     }
 }
-
 // =========================================================================
 // HÀM KÍCH HOẠT TIMELINE HIỂN THỊ & PHÁT ÂM TUẦN TỰ
 // =========================================================================
