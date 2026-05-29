@@ -619,29 +619,51 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // Hàm chuyển hướng mở màn chọn ngày trong file script.js của bro
+// Thay thế hàm MoChonNgayN1 cũ bằng đoạn này
 function MoChonNgayN1() {
-    ChuyenTab('man-hinh-chon-ngay');
-}
+    // 1. Tìm tất cả các màn hình đang có class active và ẩn sạch chúng đi
+    document.querySelectorAll('.man-hinh').forEach(man => {
+        man.classList.remove('active');
+        man.style.display = 'none'; // Ép ẩn nếu CSS xài style ẩn
+    });
 
-// Logic tự bẻ mảng 10 chữ và liên kết vào hàm nạp dữ liệu cũ của bro
+    // 2. Ép màn hình chọn ngày hiện lên chình ình luôn
+    const manChonNgay = document.getElementById('man-hinh-chon-ngay');
+    if (manChonNgay) {
+        manChonNgay.classList.add('active');
+        manChonNgay.style.display = 'block'; // Ép hiển thị dạng block
+    }
+}
+// Bắt sự kiện click 10 nút ngày học
 const WORDS_PER_DAY = 10;
 document.querySelectorAll('.day-btn').forEach(button => {
     button.addEventListener('click', (e) => {
         const selectedDay = parseInt(e.target.getAttribute('data-day'));
         
-        // Cắt mảng tự động lấy đúng 10 từ từ mảng n1_core JSON gốc
+        // Cắt mảng lấy đúng 10 từ
         const startIndex = (selectedDay - 1) * WORDS_PER_DAY;
         const endIndex = startIndex + WORDS_PER_DAY;
-        const danhSachHocHomNay = n1_core.slice(startIndex, endIndex);
         
-        // Chuyển trực tiếp sang màn học chi tiết của app
-        ChuyenTab('man-hoc-chi-tiet');
+        // n1_core là mảng dữ liệu 100 chữ của bro
+        duLieuN1CuaNgay = n1_core.slice(startIndex, endIndex); 
         
-        // Đăng tiêu đề ngày học lên app để tăng phần sinh động
-        document.getElementById('tieu-de-bai-hoc').innerText = `N1 - NGÀY THỨ ${selectedDay}`;
+        // Kích hoạt trạng thái học theo ngày
+        dangHocN1TheoNgay = true;
         
-        // Gọi hàm hiển thị bài học cũ của bro (Ví dụ là TaiDuLieuChiTiet hoặc hàm render của bro)
-        // Hãy truyền biến `danhSachHocHomNay` vào hàm xử lý render giao diện học của bro nhé!
-        KhoiTaoGiaoDienHocFlashcard(danhSachHocHomNay); 
+        // Ẩn màn chọn ngày đi trước khi nạp bài học
+        const manChonNgay = document.getElementById('man-hinh-chon-ngay');
+        if (manChonNgay) {
+            manChonNgay.classList.remove('active');
+            manChonNgay.style.display = 'none';
+        }
+        
+        // Gọi hàm gốc của bro để tự nạp dữ liệu và chuyển sang màn flashcard học chi tiết
+        TaiDuLieuHoc('kanji', 'n1');
+        
+        // Đè lại tiêu đề sau khi app load xong
+        setTimeout(() => {
+            const tieuDe = document.getElementById('tieu-de-bai-hoc');
+            if (tieuDe) tieuDe.innerText = `N1 - KANJI NGÀY ${selectedDay}`;
+        }, 120);
     });
 });
