@@ -173,7 +173,7 @@ function KichHoatTienDo(indexChon) {
 }
 
 // =========================================================================
-// HÀM CHẠY DÒNG THỜI GIAN FLASHCARD & HIỂN THỊ NỘI DUNG
+// HÀM CHẠY DÒNG THỜI GIAN FLASHCARD & HIỂN THỊ NỘI DUNG (BẢN FIX CHUẨN)
 // =========================================================================
 function ChayDongThoiGianFlashcard() {
     const vungChua = document.getElementById('vung-chua-the-dong');
@@ -206,6 +206,7 @@ function ChayDongThoiGianFlashcard() {
     ClearAllTimers(); // Xóa sạch tất cả bộ đếm trước khi chạy item mới
 
     const item = duLieuHienTai[indexHienTai];
+    let styleAnYomi = hienThiYomi ? "" : "display: none !important;";
 
     // 1️⃣ XỬ LÝ MÀN HÌNH HỌC KANJI
     if (loaiHocHienTai === 'kanji') {
@@ -235,8 +236,6 @@ function ChayDongThoiGianFlashcard() {
             amHanViet = nghiaGoc; 
         }
 
-        let styleAnYomi = hienThiYomi ? "" : "display: none !important;";
-
         if (vungChua) {
             vungChua.innerHTML = `
                 <div class="the-cyber-card" style="min-height: 280px; height: auto; padding-bottom: 20px;">
@@ -261,13 +260,33 @@ function ChayDongThoiGianFlashcard() {
             `;
         }
         
+        // Luồng phát âm chính cho Kanji
         let chuoiDocKanjiViet = `${amHanViet}. Nghĩa là: ${nghiaTiengViet}`;
-        KichHoatTimeline(chuKanji, chuoiDocKanjiViet, viDu);
+        
+        // Tách từ ghép thành mảng để xử lý chống lai giọng
+        let mangTuGhep = viDu.split(/[,，、]/);
+        let danhSachPhatAmTuGhep = [];
 
-    // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP
+        mangTuGhep.forEach(tu => {
+            if (!tu.trim()) return;
+            let khopNoi = tu.match(/^([^(\uff08]+)(?:\s*[\(\uff08](.*?)[\)\uff09])?/);
+            if (khopNoi) {
+                let tiengNhat = khopNoi[1].trim(); 
+                let tiengViet = khopNoi[2] ? khopNoi[2].trim() : ""; 
+                
+                if (tiengNhat) danhSachPhatAmTuGhep.push({ text: tiengNhat, lang: 'ja-JP' });
+                if (tiengViet) danhSachPhatAmTuGhep.push({ text: ` nghĩa là ${tiengViet}`, lang: 'vi-VN' });
+            } else {
+                danhSachPhatAmTuGhep.push({ text: tu.trim(), lang: 'ja-JP' });
+            }
+        });
+
+        KichHoatTimelineNangCao(chuKanji, chuoiDocKanjiViet, danhSachPhatAmTuGhep);
+
+    // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP (ĐÃ KHÔI PHỤC VÀ TỐI ƯU PHÁT ÂM)
     } else if (loaiHocHienTai === 'grammar') {
-        const cauTruc = item.grammar || item.cau_truc || "";
-        const nghiaPhap = item.meaning || item.nghia || "";
+        const cauTruc = item.grammar || item.cau_truc || "Chưa có cấu trúc";
+        const nghiaPhap = item.meaning || item.nghia || "Chưa có ý nghĩa";
         const giaiThich = item.explanation || item.giai_thich || "Chưa có giải thích chi tiết";
         
         const mangViDu = item.examples || [];
@@ -278,33 +297,45 @@ function ChayDongThoiGianFlashcard() {
             vdViet = mangViDu[0].vi || "";
         }
 
-        // [Tìm đoạn này ở gần cuối phần xử lý Kanji của hàm ChayDongThoiGianFlashcard]
-        let styleAnYomi = hienThiYomi ? "" : "display: none !important;";
-
         if (vungChua) {
             vungChua.innerHTML = `
                 <div class="the-cyber-card" style="min-height: 280px; height: auto; padding-bottom: 20px;">
-                    <div class="chu-kanji-khong-lo" style="line-height: 1.2; margin-bottom: 10px;">${chuKanji}</div>
-                    <div id="step-am-doc" class="khoi-noi-dung" style="margin-bottom: 8px; opacity:0; transition: opacity 0.4s;">
-                        <div class="label-am-han" style="color: #ff00ff; font-weight: bold; font-size: 1.2rem;">ÂM HÁN: ${amHanViet.toUpperCase()}</div>
+                    <div class="chu-kanji-khong-lo" style="line-height: 1.3; font-size: 2.2rem; margin-bottom: 15px; padding: 0 10px; word-break: break-all; color: #38bdf8;">
+                        ${cauTruc}
                     </div>
-                    <div id="step-nghia-viet" class="khoi-nghia-viet" style="margin-bottom: 15px; opacity:0; transition: opacity 0.4s;">
-                        <div class="text-nghia" style="color: #00ffcc; font-size: 1.4rem; font-weight: bold; background: rgba(0, 255, 204, 0.1); padding: 8px 15px; display: inline-block; border-radius: 8px;">
-                            ${nghiaTiengViet}
+                    <div id="step-am-doc" class="khoi-noi-dung" style="margin-bottom: 10px; opacity:0; transition: opacity 0.4s;">
+                        <div class="label-am-han" style="color: #00ffcc; font-weight: bold; font-size: 1.3rem; background: rgba(0, 255, 204, 0.1); padding: 6px 12px; display: inline-block; border-radius: 6px;">
+                            Ý NGHĨA: ${nghiaPhap}
                         </div>
                     </div>
-                    <div id="step-yomi" class="khoi-yomi-duoi" style="${styleAnYomi} margin-bottom: 15px; opacity:0; transition: opacity 0.4s;">
-                        <div class="dong-cach-doc" style="font-size: 0.95rem; color: #cbd5e1; margin-bottom: 4px;"><strong>Onyomi:</strong> ${onyomi}</div>
-                        <div class="dong-cach-doc" style="font-size: 0.95rem; color: #cbd5e1;"><strong>Kunyomi:</strong> ${kunyomi}</div>
+                    <div id="step-nghia-viet" class="khoi-nghia-viet" style="${styleAnYomi} margin-bottom: 15px; opacity:0; transition: opacity 0.4s; padding: 0 10px;">
+                        <div class="text-nghia" style="color: #cbd5e1; font-size: 0.95rem; text-align: left; line-height: 1.5; border-left: 3px solid #ff00ff; padding-left: 10px;">
+                            <strong>Giải thích:</strong> ${giaiThich}
+                        </div>
                     </div>
-                    <div id="step-tu-ghep" class="khoi-tu-ghep" style="${styleAnYomi} border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; opacity:0; transition: opacity 0.4s;">
-                        <div class="title-ghep" style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;">Từ Ghép Tạo Nghĩa:</div>
-                        <div class="content-ghep" style="font-size: 1.05rem; color: #fff;">${viDu}</div>
+                    <div id="step-tu-ghep" class="khoi-tu-ghep" style="border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 12px; opacity:0; transition: opacity 0.4s; text-align: left; padding-left: 10px; padding-right: 10px;">
+                        <div class="title-ghep" style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 6px;">Ví Dụ Thực Tế:</div>
+                        <div class="content-ghep" style="font-size: 1.1rem; color: #fff; font-weight: 500; margin-bottom: 4px; line-height: 1.4;">${vdNhat}</div>
+                        <div class="content-ghep-vi" style="font-size: 0.9rem; color: #a1a1aa; font-style: italic;">👉 ${vdViet}</div>
                     </div>
                 </div>
             `;
         }
-        
+
+        // Tách chuỗi phát âm cho Ngữ pháp (Câu ví dụ tiếng Nhật giọng Nhật, Nghĩa tiếng Việt giọng Việt)
+        let danhSachPhatAmNguPhap = [];
+        if (vdNhat) {
+            danhSachPhatAmNguPhap.push({ text: vdNhat, lang: 'ja-JP' });
+        }
+        if (vdViet) {
+            danhSachPhatAmNguPhap.push({ text: `Nghĩa là: ${vdViet}`, lang: 'vi-VN' });
+        }
+
+        // Kích hoạt timeline cho màn hình Ngữ pháp
+        let chuoiDocNguPhapMởDầu = `Cấu trúc: ${cauTruc}. Ý nghĩa: ${nghiaPhap}`;
+        KichHoatTimelineNangCao(cauTruc, chuoiDocNguPhapMởDầu, danhSachPhatAmNguPhap);
+    }
+}
         // ==========================================
         // 🚀 ĐÂY LÀ PHẦN XỬ LÝ FIX LỖI ĐỌC LAI GIỌNG
         // ==========================================
