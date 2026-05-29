@@ -617,3 +617,31 @@ window.addEventListener('DOMContentLoaded', () => {
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
 });
+
+// Hàm chuyển hướng mở màn chọn ngày trong file script.js của bro
+function MoChonNgayN1() {
+    ChuyenTab('man-hinh-chon-ngay');
+}
+
+// Logic tự bẻ mảng 10 chữ và liên kết vào hàm nạp dữ liệu cũ của bro
+const WORDS_PER_DAY = 10;
+document.querySelectorAll('.day-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const selectedDay = parseInt(e.target.getAttribute('data-day'));
+        
+        // Cắt mảng tự động lấy đúng 10 từ từ mảng n1_core JSON gốc
+        const startIndex = (selectedDay - 1) * WORDS_PER_DAY;
+        const endIndex = startIndex + WORDS_PER_DAY;
+        const danhSachHocHomNay = n1_core.slice(startIndex, endIndex);
+        
+        // Chuyển trực tiếp sang màn học chi tiết của app
+        ChuyenTab('man-hoc-chi-tiet');
+        
+        // Đăng tiêu đề ngày học lên app để tăng phần sinh động
+        document.getElementById('tieu-de-bai-hoc').innerText = `N1 - NGÀY THỨ ${selectedDay}`;
+        
+        // Gọi hàm hiển thị bài học cũ của bro (Ví dụ là TaiDuLieuChiTiet hoặc hàm render của bro)
+        // Hãy truyền biến `danhSachHocHomNay` vào hàm xử lý render giao diện học của bro nhé!
+        KhoiTaoGiaoDienHocFlashcard(danhSachHocHomNay); 
+    });
+});
