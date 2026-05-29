@@ -69,17 +69,31 @@ body {
    BẮT BUỘC: QUẢN LÝ ẨN HIỆN CÁC MÀN HÌNH
    ========================================== */
 /* Ép toàn bộ màn hình vào một cái khung cố định */
+/* Tìm class .man-hinh của bro và thêm thuộc tính flex cho các phần tử con */
 .man-hinh {
-    display: none !important; /* Mặc định là ẩn */
-    width: 100%;
-    height: 100%;            /* Chiều cao bằng đúng app-container */
-    position: absolute;      /* "Ghim" tại một chỗ */
+    display: none !important;
+    position: absolute; /* Cái này đúng rồi, để nó đè lên nhau */
     top: 0;
     left: 0;
-    overflow-y: auto;        /* Chỉ cuộn khi nội dung bên trong quá dài */
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
     padding: 20px;
     box-sizing: border-box;
-    z-index: 1;              /* Nằm dưới */
+    
+    /* QUAN TRỌNG: Thêm 3 dòng này để nó tự xếp hàng dọc */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* Giúp các nút bấm full chiều ngang */
+}
+
+/* Đảm bảo các thẻ tiêu đề bên trong KHÔNG có position: absolute */
+.man-hinh h2, 
+.man-hinh .tieu-de, 
+.man-hinh .nav-top {
+    position: static !important; /* Ép nó về mặc định */
+    margin-bottom: 15px;         /* Tạo khoảng cách giữa các phần */
+    display: block;
 }
 
 /* Chỉ hiện đúng cái thằng đang được chọn */
