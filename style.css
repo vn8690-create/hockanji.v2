@@ -66,13 +66,16 @@ body {
    BẮT BUỘC: QUẢN LÝ ẨN HIỆN CÁC MÀN HÌNH
    ========================================== */
 .man-hinh {
-    display: none !important; /* Mặc định ẩn sạch, chỉ hiện màn nào có class active */
-    width: 100%;
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .man-hinh.active {
-    display: flex !important;
-    flex-direction: column;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* TRANG CHỦ & HƯỚNG DẪN */
