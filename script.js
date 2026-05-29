@@ -15,7 +15,7 @@ let tuDongChuyenBai = false;
 let isMuted = false; 
 
 // Biến phục vụ cho Đấu Trường Test
-let capDoTestChon = '';    
+let capDoTestChon = '';     
 let theLoaiTestChon = ''; 
 let mangCauHoiTest = [];   
 let indexTestHienTai = 0;
@@ -81,7 +81,6 @@ function CapNhatCaiDatHoc() {
     if (!tuDongChuyenBai) {
         clearTimeout(boDemTuDongChuyen);
     }
-    // Bỏ phần tự động gọi lại ChayDongThoiGian ở đây để tránh bị lặp đè phát âm khi đang học
 }
 
 function ThayDoiTrangThaiMute() {
@@ -137,6 +136,7 @@ function TaiDuLieuHoc(loaiHoc, tenFile) {
             duLieuHienTai = data; 
             let tienDoCu = parseInt(localStorage.getItem(`tien_do_${tenFileHienTai}`)) || 0;
 
+            // ĐÃ FIX: Sửa lỗi chính tả duLieluHienTai thành duLieuHienTai
             if (tienDoCu > 0 && tienDoCu < duLieuHienTai.length && vungChua && tieuDe) {
                 vungChua.innerHTML = `
                     <div class="the-cyber-card" style="text-align: center; padding: 40px 20px;">
@@ -173,7 +173,7 @@ function KichHoatTienDo(indexChon) {
 }
 
 // =========================================================================
-// HÀM CHẠY DÒNG THỜI GIAN FLASHCARD & HIỂN THỊ NỘI DUNG (BẢN FIX CHUẨN)
+// HÀM CHẠY DÒNG THỜI GIAN FLASHCARD & HIỂN THỊ NỘI DUNG
 // =========================================================================
 function ChayDongThoiGianFlashcard() {
     const vungChua = document.getElementById('vung-chua-the-dong');
@@ -203,7 +203,7 @@ function ChayDongThoiGianFlashcard() {
     if (tieuDe) tieuDe.innerText = `TIẾN ĐỘ: ${indexHienTai + 1} / ${duLieuHienTai.length}`;
     if (nutChuyen) nutChuyen.classList.add('an-giau');
     
-    ClearAllTimers(); // Xóa sạch tất cả bộ đếm trước khi chạy item mới
+    ClearAllTimers(); 
 
     const item = duLieuHienTai[indexHienTai];
     let styleAnYomi = hienThiYomi ? "" : "display: none !important;";
@@ -260,10 +260,7 @@ function ChayDongThoiGianFlashcard() {
             `;
         }
         
-        // Luồng phát âm chính cho Kanji
         let chuoiDocKanjiViet = `${amHanViet}. Nghĩa là: ${nghiaTiengViet}`;
-        
-        // Tách từ ghép thành mảng để xử lý chống lai giọng
         let mangTuGhep = viDu.split(/[,，、]/);
         let danhSachPhatAmTuGhep = [];
 
@@ -283,7 +280,7 @@ function ChayDongThoiGianFlashcard() {
 
         KichHoatTimelineNangCao(chuKanji, chuoiDocKanjiViet, danhSachPhatAmTuGhep);
 
-    // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP (ĐÃ KHÔI PHỤC VÀ TỐI ƯU PHÁT ÂM)
+    // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP
     } else if (loaiHocHienTai === 'grammar') {
         const cauTruc = item.grammar || item.cau_truc || "Chưa có cấu trúc";
         const nghiaPhap = item.meaning || item.nghia || "Chưa có ý nghĩa";
@@ -322,7 +319,6 @@ function ChayDongThoiGianFlashcard() {
             `;
         }
 
-        // Tách chuỗi phát âm cho Ngữ pháp (Câu ví dụ tiếng Nhật giọng Nhật, Nghĩa tiếng Việt giọng Việt)
         let danhSachPhatAmNguPhap = [];
         if (vdNhat) {
             danhSachPhatAmNguPhap.push({ text: vdNhat, lang: 'ja-JP' });
@@ -331,42 +327,13 @@ function ChayDongThoiGianFlashcard() {
             danhSachPhatAmNguPhap.push({ text: `Nghĩa là: ${vdViet}`, lang: 'vi-VN' });
         }
 
-        // Kích hoạt timeline cho màn hình Ngữ pháp
-        let chuoiDocNguPhapMởDầu = `Cấu trúc: ${cauTruc}. Ý nghĩa: ${nghiaPhap}`;
-        KichHoatTimelineNangCao(cauTruc, chuoiDocNguPhapMởDầu, danhSachPhatAmNguPhap);
+        let chuoiDocNguPhapMoDau = `Cấu trúc: ${cauTruc}. Ý nghĩa: ${nghiaPhap}`;
+        KichHoatTimelineNangCao(cauTruc, chuoiDocNguPhapMoDau, danhSachPhatAmNguPhap);
     }
 }
-        // ==========================================
-        // 🚀 ĐÂY LÀ PHẦN XỬ LÝ FIX LỖI ĐỌC LAI GIỌNG
-        // ==========================================
-        let chuoiDocKanjiViet = `${amHanViet}. Nghĩa là: ${nghiaTiengViet}`;
-        
-        // Tách từ ghép thành mảng bằng dấu phẩy
-        let mangTuGhep = viDu.split(/[,，、]/);
-        let danhSachPhatAmTuGhep = [];
 
-        mangTuGhep.forEach(tu => {
-            if (!tu.trim()) return;
-            // Dùng Regex bóc tách: Phần chữ Nhật nằm ngoài và phần giải thích nằm trong ngoặc ()
-            let khopNoi = tu.match(/^([^(\uff08]+)(?:\s*[\(\uff08](.*?)[\)\uff09])?/);
-            if (khopNoi) {
-                let tiengNhat = khopNoi[1].trim(); // Ví dụ: "二回" hoặc "二月"
-                let tiengViet = khopNoi[2] ? khopNoi[2].trim() : ""; // Ví dụ: "Nhị hồi - 2 lần" hoặc "Tháng 2"
-                
-                if (tiengNhat) danhSachPhatAmTuGhep.push({ text: tiengNhat, lang: 'ja-JP' });
-                if (tiengViet) danhSachPhatAmTuGhep.push({ text: ` nghĩa là ${tiengViet}`, lang: 'vi-VN' });
-            } else {
-                // Nếu không đúng cấu trúc ngoặc, cứ đẩy tạm vào giọng Nhật chống cháy
-                danhSachPhatAmTuGhep.push({ text: tu.trim(), lang: 'ja-JP' });
-            }
-        });
-
-        // Kích hoạt dòng thời gian nâng cao truyền kèm danh sách phát âm đã bóc tách
-        KichHoatTimelineNangCao(chuKanji, chuoiDocKanjiViet, danhSachPhatAmTuGhep);
-
-    // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP (Giữ nguyên hoặc cập nhật tùy ý)
 // =========================================================================
-// HÀM KÍCH HOẠT TIMELINE HIỂN THỊ & PHÁT ÂM TUẦN TỰ (ĐÃ SỬA LỖI ĐÈ BỘ ĐẾM)
+// HÀM KÍCH HOẠT TIMELINE HIỂN THỊ & PHÁT ÂM TUẦN TỰ
 // =========================================================================
 function KichHoatTimelineNangCao(vanBanTiengNhat, vanBanTiengViet, danhSachPhatAmTuGhep) {
     const eStep1 = document.getElementById('step-am-doc');
@@ -390,19 +357,15 @@ function KichHoatTimelineNangCao(vanBanTiengNhat, vanBanTiengViet, danhSachPhatA
 
     if (isMuted) return; 
 
-    // Bước 1: Đọc chữ Kanji tổng (Giọng Nhật)
     DocGiongMay(vanBanTiengNhat, 'ja-JP', 0.85, () => {
         if (isMuted) return;
         
-        // Bước 2: Đọc Âm Hán + Nghĩa (Giọng Việt)
         DocGiongMay(vanBanTiengViet, 'vi-VN', 1.0, () => {
             if (isMuted) return;
             
-            // Bước 3: Đọc chuỗi Từ Ghép tuần tự (Đoạn nào tiếng Nhật giọng Nhật, tiếng Việt giọng Việt)
             PhatAmChuoiTuGhepTuanTu(danhSachPhatAmTuGhep, 0, () => {
                 if (isMuted) return;
                 
-                // Bước 4: Tự động chuyển bài nếu bật Auto Next
                 if (tuDongChuyenBai) {
                     clearTimeout(boDemTuDongChuyen);
                     boDemTuDongChuyen = setTimeout(() => {
@@ -414,7 +377,6 @@ function KichHoatTimelineNangCao(vanBanTiengNhat, vanBanTiengViet, danhSachPhatA
     });
 }
 
-// Hàm đệ quy chạy mượt mà chuỗi phát âm hỗn hợp ngôn ngữ
 function PhatAmChuoiTuGhepTuanTu(danhSach, index, khiXongToanBo) {
     if (isMuted || index >= danhSach.length) {
         if (khiXongToanBo) khiXongToanBo();
@@ -425,7 +387,6 @@ function PhatAmChuoiTuGhepTuanTu(danhSach, index, khiXongToanBo) {
     let tocDo = phanTu.lang === 'ja-JP' ? 0.85 : 1.0;
 
     DocGiongMay(phanTu.text, phanTu.lang, tocDo, () => {
-        // Gọi đệ quy đến phần tử tiếp theo trong mảng
         PhatAmChuoiTuGhepTuanTu(danhSach, index + 1, khiXongToanBo);
     });
 }
@@ -476,7 +437,7 @@ function ResetToanBoTienDoFile() {
 }
 
 // =========================================================================
-// KHU VỰC ĐẤU TRƯỜNG TEST TRẮC NGHIỆM 4 ĐÁP ÁN (ĐÃ FIX LỌC PHƯƠNG ÁN NHIỄU)
+// KHU VỰC ĐẤU TRƯỜNG TEST TRẮC NGHIỆM 4 ĐÁP ÁN
 // =========================================================================
 function KichHoatLamDe(theLoai) {
     theLoaiTestChon = theLoai;
@@ -549,7 +510,6 @@ function TaoDeTracNghiem(khoGoc) {
                 dapAnDung = nghiaGoc;
             }
 
-            // ĐÃ FIX: Lọc bằng cách đối chiếu index của phần tử để tránh lọc nhầm dữ liệu trùng tên
             let cacTuKhac = khoGoc.filter((x, idx) => idx !== khoGoc.indexOf(itemGoc));
             let dapAnNhieu = cacTuKhac.map(x => {
                 let n = x.meaning || x.nghia || "";
@@ -568,7 +528,6 @@ function TaoDeTracNghiem(khoGoc) {
                 if (dapAnNhieu[j]) {
                     bo4DapAn.push(dapAnNhieu[j]);
                 } else {
-                    // ĐÃ FIX: Bốc từ kho dự phòng thay vì ghi "phương án nhiễu phụ" thô kệch
                     let tuDuPhong = KHO_NHIEU_DU_PHONG[j % KHO_NHIEU_DU_PHONG.length];
                     bo4DapAn.push(tuDuPhong);
                 }
