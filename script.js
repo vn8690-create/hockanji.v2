@@ -618,52 +618,70 @@ window.addEventListener('DOMContentLoaded', () => {
     if (khungXp) khungXp.innerText = diemXP;
 });
 
-// Hàm chuyển hướng mở màn chọn ngày trong file script.js của bro
-// Thay thế hàm MoChonNgayN1 cũ bằng đoạn này
-function MoChonNgayN1() {
-    // 1. Tìm tất cả các màn hình đang có class active và ẩn sạch chúng đi
-    document.querySelectorAll('.man-hinh').forEach(man => {
-        man.classList.remove('active');
-        man.style.display = 'none'; // Ép ẩn nếu CSS xài style ẩn
-    });
+// ==================== CỤM CODE MỚI CHIA NGÀY TỰ ĐỘNG KHÔNG LỖI ====================
+const WORDS_PER_DAY = 10;
+let dangHocN1TheoNgay = false;
+let duLieuN1CuaNgay = [];
 
-    // 2. Ép màn hình chọn ngày hiện lên chình ình luôn
-    const manChonNgay = document.getElementById('man-hinh-chon-ngay');
-    if (manChonNgay) {
-        manChonNgay.classList.add('active');
-        manChonNgay.style.display = 'block'; // Ép hiển thị dạng block
+// Hàm mở màn hình chọn ngày học N1 và TỰ ĐỘNG SINH NÚT THEO ĐỘ DÀI KANJI THỰC TẾ
+function MoChonNgayN1() {
+    // 1. Dùng hàm chuyển tab gốc của bro để ẩn các màn khác và hiện màn chọn ngày học lên
+    ChuyenTab('man-hinh-chon-ngay');
+    
+    // 2. Tự động tính toán số ngày (Ví dụ: 1232 chữ / 10 từ = 124 ngày học)
+    const tongSoNgay = Math.ceil(n1_core.length / WORDS_PER_DAY);
+    
+    const vungChuaNut = document.getElementById('vung-chua-nut-ngay');
+    if (!vungChuaNut) return;
+    
+    // Xóa sạch các nút cũ trước khi tạo mới để tránh bị lặp nút khi mở đi mở lại
+    vungChuaNut.innerHTML = '';
+    
+    // Vòng lặp tự động render toàn bộ số nút ngày theo phong cách Cyber Neon
+    for (let i = 1; i <= tongSoNgay; i++) {
+        const nutNgay = document.createElement('button');
+        nutNgay.innerText = `Ngày ${i}`;
+        nutNgay.style.cssText = `
+            padding: 12px 5px; 
+            background: rgba(0,0,0,0.5); 
+            color: #fff; 
+            border: 1px solid #00ffcc; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            box-shadow: 0 0 5px rgba(0,255,204,0.1);
+        `;
+        
+        // Cài đặt sự kiện click cho từng nút ngày được sinh ra
+        nutNgay.addEventListener('click', () => {
+            // Cắt mảng lấy chuẩn xác 10 từ của ngày được click
+            const startIndex = (i - 1) * WORDS_PER_DAY;
+            const endIndex = startIndex + WORDS_PER_DAY;
+            duLieuN1CuaNgay = n1_core.slice(startIndex, endIndex);
+            
+            // Bật trạng thái đánh chặn: báo cho app biết là đang học theo tiến độ ngày
+            dangHocN1TheoNgay = true;
+            
+            // Chuyển trực tiếp sang màn hình học chi tiết flashcard bằng hàm gốc của bro
+            ChuyenTab('man-hoc-chi-tiet');
+            
+            // Kích hoạt hàm gốc để app tự bóc tách 10 từ này ra hiển thị, chạy âm thanh,...
+            TaiDuLieuHoc('kanji', 'n1');
+            
+            // Đè lại tiêu đề ngày học cho sinh động
+            setTimeout(() => {
+                const tieuDe = document.getElementById('tieu-de-bai-hoc');
+                if (tieuDe) tieuDe.innerText = `N1 - KANJI NGÀY ${i}`;
+            }, 150);
+        });
+        
+        vungChuaNut.appendChild(nutNgay);
     }
 }
-// Bắt sự kiện click 10 nút ngày học
-const WORDS_PER_DAY = 10;
-document.querySelectorAll('.day-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-        const selectedDay = parseInt(e.target.getAttribute('data-day'));
-        
-        // Cắt mảng lấy đúng 10 từ
-        const startIndex = (selectedDay - 1) * WORDS_PER_DAY;
-        const endIndex = startIndex + WORDS_PER_DAY;
-        
-        // n1_core là mảng dữ liệu 100 chữ của bro
-        duLieuN1CuaNgay = n1_core.slice(startIndex, endIndex); 
-        
-        // Kích hoạt trạng thái học theo ngày
-        dangHocN1TheoNgay = true;
-        
-        // Ẩn màn chọn ngày đi trước khi nạp bài học
-        const manChonNgay = document.getElementById('man-hinh-chon-ngay');
-        if (manChonNgay) {
-            manChonNgay.classList.remove('active');
-            manChonNgay.style.display = 'none';
-        }
-        
-        // Gọi hàm gốc của bro để tự nạp dữ liệu và chuyển sang màn flashcard học chi tiết
-        TaiDuLieuHoc('kanji', 'n1');
-        
-        // Đè lại tiêu đề sau khi app load xong
-        setTimeout(() => {
-            const tieuDe = document.getElementById('tieu-de-bai-hoc');
-            if (tieuDe) tieuDe.innerText = `N1 - KANJI NGÀY ${selectedDay}`;
-        }, 120);
-    });
-});
+
+// Cập nhật lại hàm thoát của bro để trả trạng thái app về mặc định khi user bấm QUAY LẠI
+function ThoatHocChiTiet() {
+    dangHocN1TheoNgay = false;
+    ChuyenTab('man-kanji');
+}
+// ==================================================================================
