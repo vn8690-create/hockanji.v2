@@ -65,27 +65,25 @@ body {
 /* ==========================================
    BẮT BUỘC: QUẢN LÝ ẨN HIỆN CÁC MÀN HÌNH
    ========================================== */
+/* Ép toàn bộ màn hình vào một cái khung cố định */
 .man-hinh {
-    display: none !important;
+    display: none !important; /* Mặc định là ẩn */
     width: 100%;
-    height: 100%; /* Ép chiều cao */
-    position: absolute; /* Cố định vị trí */
+    height: 100%;            /* Chiều cao bằng đúng app-container */
+    position: absolute;      /* "Ghim" tại một chỗ */
     top: 0;
     left: 0;
-    overflow-y: auto; /* Cuộn trong nội bộ màn hình */
+    overflow-y: auto;        /* Chỉ cuộn khi nội dung bên trong quá dài */
     padding: 20px;
     box-sizing: border-box;
-    
-    /* Hiệu ứng bro muốn thêm vào đây */
-    opacity: 0; 
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 1;              /* Nằm dưới */
 }
 
+/* Chỉ hiện đúng cái thằng đang được chọn */
 .man-hinh.active {
-    display: flex !important; /* Hiện lên */
-    opacity: 1;
-    animation: fadeIn 0.5s ease-out; /* Chạy hiệu ứng */
-    z-index: 10;
+    display: flex !important;
+    flex-direction: column;
+    z-index: 10;             /* Đẩy thằng này lên trên cùng */
 }
 
 @keyframes fadeIn {
