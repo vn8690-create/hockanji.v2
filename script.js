@@ -364,7 +364,7 @@ function ChayDongThoiGianFlashcard() {
                 let tiengViet = khopNoi[2] ? khopNoi[2].trim() : ""; 
                 
                 if (tiengNhat) danhSachPhatAmTuGhep.push({ text: tiengNhat, lang: 'ja-JP' });
-                if (tiengViet) danhSachPhatAmTuGhep.push({ text: ` nghĩa là ${tiengViet}`, lang: 'vi-VN' });
+                if (tiengViet) danhSachPhatAmTuGhep.push({ text: `${tiengViet}`, lang: 'vi-VN' });
             } else {
                 danhSachPhatAmTuGhep.push({ text: tu.trim(), lang: 'ja-JP' });
             }
