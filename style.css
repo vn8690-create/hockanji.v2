@@ -16,9 +16,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
 }
 
-```css id="9lqv6i"
+
+
 .app-container {
     width: 100%;
     max-width: 450px;
@@ -29,7 +31,6 @@ body {
     display: flex;
     flex-direction: column;
 }
-```
 
 /* HEADER ĐỈNH CAO */
 .app-header {
@@ -61,7 +62,7 @@ body {
 }
 
 /* VÙNG NỘI DUNG CUỘN ĐỘNG CHÍNH */
-```css
+
 .app-main {
     flex: 1;
     overflow-y: auto;
@@ -69,13 +70,11 @@ body {
     padding-bottom: 100px;
     position: relative;
 }
-```
 
 /* ==========================================
    BẮT BUỘC: QUẢN LÝ ẨN HIỆN CÁC MÀN HÌNH
    ========================================== */
 /* Ép toàn bộ màn hình vào một cái khung cố định */
-```css id="tqk8o0"
 .man-hinh {
     display: none;
     width: 100%;
@@ -89,7 +88,6 @@ body {
     flex-direction: column;
     gap: 15px;
 }
-```
 
 
 
@@ -342,6 +340,8 @@ rt { font-size: 0.55em; color: #00ffcc; padding-bottom: 2px; }
 
 /* Khung chứa các câu hỏi trắc nghiệm */
 .the-cyber-card-test {
+backdrop-filter: blur(10px);
+transition: all 0.25s ease;
     background: rgba(15, 23, 42, 0.8);
     border: 2px solid #38bdf8;
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
@@ -402,3 +402,24 @@ rt { font-size: 0.55em; color: #00ffcc; padding-bottom: 2px; }
 .hien-hien { display: block !important; animation: hienDan 0.3s forwards; }
 @keyframes hienDan { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
 .loading-text { text-align: center; padding: 40px; color: #64748b; }
+
+@media (max-width: 480px) {
+    .app-container {
+        max-width: 100%;
+    }
+
+    .app-main {
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-bottom: 110px;
+    }
+
+    .chu-kanji-khong-lo {
+        font-size: 3.5rem;
+    }
+
+    .nav-text {
+        font-size: 0.68rem;
+    }
+}
+
