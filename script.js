@@ -625,50 +625,66 @@ let duLieuN1CuaNgay = [];
 
 // Hàm mở màn hình chọn ngày học N1 và TỰ ĐỘNG SINH NÚT THEO ĐỘ DÀI KANJI THỰC TẾ
 function MoChonNgayN1() {
-    // 1. Dùng hàm chuyển tab gốc của bro để ẩn các màn khác và hiện màn chọn ngày học lên
+    // 1. Chuyển tab sang màn hình chọn ngày học
     ChuyenTab('man-hinh-chon-ngay');
     
-    // 2. Tự động tính toán số ngày (Ví dụ: 1232 chữ / 10 từ = 124 ngày học)
+    // 🕵️‍♂️ ĐOẠN KIỂM TRA THẦN THÁNH: Bro bật F12 trên trình duyệt xem nó in ra bao nhiêu chữ nhé!
+    console.log("Độ dài dữ liệu N1 hiện tại là:", n1_core ? n1_core.length : "Biến n1_core chưa tồn tại!");
+
+    // Nếu n1_core chưa load kịp, ta thử lấy từ hàm fetch hoặc biến dữ liệu gốc của bro
+    // Giả sử dữ liệu của bro nằm trong một biến khác hoặc cần kiểm tra:
+    if (!n1_core || n1_core.length === 0) {
+        alert("Bro ơi, dữ liệu Kanji N1 chưa load kịp hoặc biến n1_core đang bị rỗng rồi!");
+        return;
+    }
+    
+    // 2. Tính toán số ngày dựa trên độ dài thật
     const tongSoNgay = Math.ceil(n1_core.length / WORDS_PER_DAY);
     
     const vungChuaNut = document.getElementById('vung-chua-nut-ngay');
-    if (!vungChuaNut) return;
+    if (!vungChuaNut) {
+        console.error("Không tìm thấy thẻ HTML có id là: vung-chua-nut-ngay");
+        return;
+    }
     
-    // Xóa sạch các nút cũ trước khi tạo mới để tránh bị lặp nút khi mở đi mở lại
+    // Xóa sạch nút cũ
     vungChuaNut.innerHTML = '';
     
-    // Vòng lặp tự động render toàn bộ số nút ngày theo phong cách Cyber Neon
+    // 3. Tiến hành sinh nút rực rỡ
     for (let i = 1; i <= tongSoNgay; i++) {
         const nutNgay = document.createElement('button');
+        nutNgay.className = 'day-btn'; // Gán class để dễ nhận diện nếu cần CSS
         nutNgay.innerText = `Ngày ${i}`;
+        
+        // CSS Style trực tiếp cho nút hiển thị rực rỡ phong cách Cyber
         nutNgay.style.cssText = `
             padding: 12px 5px; 
-            background: rgba(0,0,0,0.5); 
-            color: #fff; 
+            background: rgba(0,255,204,0.1); 
+            color: #00ffcc; 
             border: 1px solid #00ffcc; 
             cursor: pointer; 
             border-radius: 5px; 
             font-weight: bold; 
-            box-shadow: 0 0 5px rgba(0,255,204,0.1);
+            text-shadow: 0 0 5px #00ffcc;
+            box-shadow: 0 0 8px rgba(0,255,204,0.2);
+            transition: all 0.2s;
         `;
         
-        // Cài đặt sự kiện click cho từng nút ngày được sinh ra
+        // Hiệu ứng hover nhẹ cho đặc vụ tăng trải nghiệm
+        nutNgay.onmouseenter = () => { nutNgay.style.background = '#00ffcc'; nutNgay.style.color = '#000'; };
+        nutNgay.onmouseleave = () => { nutNgay.style.background = 'rgba(0,255,204,0.1)'; nutNgay.style.color = '#00ffcc'; };
+        
+        // Sự kiện khi bấm vào nút ngày học
         nutNgay.addEventListener('click', () => {
-            // Cắt mảng lấy chuẩn xác 10 từ của ngày được click
             const startIndex = (i - 1) * WORDS_PER_DAY;
             const endIndex = startIndex + WORDS_PER_DAY;
             duLieuN1CuaNgay = n1_core.slice(startIndex, endIndex);
             
-            // Bật trạng thái đánh chặn: báo cho app biết là đang học theo tiến độ ngày
             dangHocN1TheoNgay = true;
             
-            // Chuyển trực tiếp sang màn hình học chi tiết flashcard bằng hàm gốc của bro
             ChuyenTab('man-hoc-chi-tiet');
-            
-            // Kích hoạt hàm gốc để app tự bóc tách 10 từ này ra hiển thị, chạy âm thanh,...
             TaiDuLieuHoc('kanji', 'n1');
             
-            // Đè lại tiêu đề ngày học cho sinh động
             setTimeout(() => {
                 const tieuDe = document.getElementById('tieu-de-bai-hoc');
                 if (tieuDe) tieuDe.innerText = `N1 - KANJI NGÀY ${i}`;
@@ -678,10 +694,3 @@ function MoChonNgayN1() {
         vungChuaNut.appendChild(nutNgay);
     }
 }
-
-// Cập nhật lại hàm thoát của bro để trả trạng thái app về mặc định khi user bấm QUAY LẠI
-function ThoatHocChiTiet() {
-    dangHocN1TheoNgay = false;
-    ChuyenTab('man-kanji');
-}
-// ==================================================================================
