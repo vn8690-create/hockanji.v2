@@ -383,16 +383,22 @@ body {
 }
 
 .chu-kanji-khong-lo {
-    font-size: 4.5rem;
-    font-weight: bold;
+    font-size: 6rem;
+
+    font-weight: 900;
 
     color: #ffffff;
 
     margin-bottom: 15px;
 
+    text-align: center;
+
+    width: 100%;
+
+    line-height: 1.1;
+
     animation: kanjiGlow 3s ease-in-out infinite;
 }
-
 @keyframes kanjiGlow {
     0% {
         text-shadow: 0 0 5px rgba(255,255,255,0.08);
