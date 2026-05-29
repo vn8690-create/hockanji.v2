@@ -137,7 +137,7 @@ function TaiDuLieuHoc(loaiHoc, tenFile) {
             duLieuHienTai = data; 
             let tienDoCu = parseInt(localStorage.getItem(`tien_do_${tenFileHienTai}`)) || 0;
 
-            if (tienDoCu > 0 && tienDoCu < duLieluHienTai.length && vungChua && tieuDe) {
+            if (tienDoCu > 0 && tienDoCu < duLieuHienTai.length && vungChua && tieuDe) {
                 vungChua.innerHTML = `
                     <div class="the-cyber-card" style="text-align: center; padding: 40px 20px;">
                         <h3 style="color: #00ffcc; margin-bottom: 20px; font-size: 1.4rem;">🎯 PHÁT HIỆN TIẾN ĐỘ CŨ</h3>
