@@ -493,22 +493,58 @@ function DocGiongMay(vanBan, ngonNgu, tocDo, khiXong) {
     }
     
     if ('speechSynthesis' in window) {
-        let vanBanSach = vanBan.replace(/<rt>.*?<\/rt>/g, '').replace(/<\/?[^>]+(>|$)/g, "");
-        vanBanSach = vanBanSach.replace(/[\/()（）\-ー]/g, ' ');
-        vanBanSach = vanBanSach.replace(/[,，、]/g, ',   '); 
-        vanBanSach = vanBanSach.replace(/[.。]/g, '.   ');
+        let vanBanSach = vanBan
+    .replace(/<rt>.*?<\/rt>/g, '')
+    .replace(/<\/?[^>]+(>|$)/g, '')
+    .replace(/[\/()（）]/g, ' ')
+    .replace(/[.,，。、:：;；!?！？]/g, ' ')
+    .replace(/[～~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
         let utterance = new SpeechSynthesisUtterance(vanBanSach);
-        utterance.lang = ngonNgu;
-        utterance.rate = tocDo;
-        
-        utterance.onend = () => { if (khiXong) khiXong(); };
-        utterance.onerror = (e) => { 
-            console.error("Lỗi phát âm:", e);
-            if (khiXong) khiXong(); 
-        };
-        
-        window.speechSynthesis.speak(utterance);
+
+utterance.lang = ngonNgu;
+utterance.rate = tocDo;
+
+// Chọn voice phù hợp
+const voices = speechSynthesis.getVoices();
+
+if (ngonNgu === 'ja-JP') {
+
+    const voiceJP = voices.find(v =>
+        v.lang.startsWith('ja')
+    );
+
+    if (voiceJP) {
+        utterance.voice = voiceJP;
+    }
+
+    utterance.pitch = 1.1;
+
+} else if (ngonNgu === 'vi-VN') {
+
+    const voiceVN = voices.find(v =>
+        v.lang.startsWith('vi')
+    );
+
+    if (voiceVN) {
+        utterance.voice = voiceVN;
+    }
+
+    utterance.pitch = 1.0;
+}
+
+utterance.onend = () => {
+    if (khiXong) khiXong();
+};
+
+utterance.onerror = (e) => {
+    console.error("Lỗi phát âm:", e);
+    if (khiXong) khiXong();
+};
+
+speechSynthesis.speak(utterance);
     } else { 
         if (khiXong) khiXong(); 
     }
