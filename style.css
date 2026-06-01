@@ -39,7 +39,7 @@ body {
 
     position: relative;
 
-    overflow: hidden;
+    overflow: visible;;
 
     background: #080c14;
 
