@@ -512,15 +512,24 @@ const voices = speechSynthesis.getVoices();
 
 if (ngonNgu === 'ja-JP') {
 
-    const voiceJP = voices.find(v =>
-        v.lang.startsWith('ja')
-    );
+    const voiceJP =
+        voices.find(v =>
+            v.name.toLowerCase().includes('otoya')
+        ) ||
+        voices.find(v =>
+            v.name.toLowerCase().includes('kyoko')
+        ) ||
+        voices.find(v =>
+            v.lang.startsWith('ja')
+        );
 
     if (voiceJP) {
         utterance.voice = voiceJP;
+        console.log("Đang dùng voice:", voiceJP.name);
     }
 
-    utterance.pitch = 1.1;
+    utterance.pitch = 1.0;
+
 
 } else if (ngonNgu === 'vi-VN') {
 
