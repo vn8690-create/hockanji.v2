@@ -131,7 +131,7 @@ body {
     display: none;
 
     width: 100%;
-    min-height: auto;
+    min-height: 100%;
 
     padding: 20px 0;
 
