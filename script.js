@@ -452,7 +452,7 @@ function KichHoatTimelineNangCao(vanBanTiengNhat, vanBanTiengViet, danhSachPhatA
     DocGiongMay(vanBanTiengNhat, 'ja-JP', 0.85, () => {
         if (isMuted) return;
         
-        DocGiongMay(vanBanTiengViet, 'vi-VN', 1.0, () => {
+        DocGiongMay(vanBanTiengViet, 'vi-VN', 0.85, () => {
             if (isMuted) return;
             
             PhatAmChuoiTuGhepTuanTu(danhSachPhatAmTuGhep, 0, () => {
