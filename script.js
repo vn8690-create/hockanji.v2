@@ -39,6 +39,12 @@ let kanjiThuThachTruoc = '';
 let daChamDiemThuThach = false;
 let chuMauDaMo = false;
 
+// Đọc hiểu được tải theo từng level để không làm nặng lần mở app đầu tiên
+let readingCache = {};
+let readingLevel = 'n5';
+let readingLesson = null;
+let readingAnswered = new Set();
+
 // --- BIẾN PHỤC VỤ CHIA NGÀY HỌC DÙNG CHUNG ---
 const WORDS_PER_DAY = 10;       // Mỗi ngày học 10 từ
 let dangHocTheoNgay = false;   // Trạng thái kiểm tra có đang học theo ngày không
@@ -68,9 +74,9 @@ function ChuyenTab(idManHinh) {
 
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (idManHinh === 'man-home') document.getElementById('btn-nav-home')?.classList.add('active');
-    if (idManHinh === 'man-kanji') document.getElementById('btn-nav-kanji')?.classList.add('active');
+    if (['man-study-hub', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
     if (idManHinh === 'man-test-levels') document.getElementById('btn-nav-test')?.classList.add('active');
-    if (idManHinh === 'man-grammar-levels') document.getElementById('btn-nav-grammar')?.classList.add('active');
+    if (['man-reading-levels', 'man-reading-lessons', 'man-reading-detail'].includes(idManHinh)) document.getElementById('btn-nav-reading')?.classList.add('active');
 }
 
 function ChonCapDoTest(capDo) {
@@ -212,9 +218,9 @@ function TaiDuLieuHoc(loaiHoc, tenFile) {
     
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (loaiHoc === 'grammar') {
-        document.getElementById('btn-nav-grammar')?.classList.add('active');
+        document.getElementById('btn-nav-study')?.classList.add('active');
     } else {
-        document.getElementById('btn-nav-kanji')?.classList.add('active');
+        document.getElementById('btn-nav-study')?.classList.add('active');
     }
 
     ChuyenTab('man-hoc-chi-tiet');
@@ -1259,6 +1265,109 @@ function CongDiemXP(soDiem) {
     localStorage.setItem('kanji_pure_xp', diemXP);
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
+}
+
+// =========================================================================
+// ĐỌC HIỂU JLPT - tải dữ liệu theo level, lưu tiến độ trên thiết bị
+// =========================================================================
+function MoCapDoDocHieu() {
+    const levels = [
+        ['n5', 'N5', 'Câu ngắn & thông báo', '3–5 phút'],
+        ['n4', 'N4', 'Đoạn văn đời sống', '5–7 phút'],
+        ['n3', 'N3', 'Ý chính & suy luận', '7–10 phút'],
+        ['n2', 'N2', 'Bài luận & quan điểm', '10–15 phút'],
+        ['n1', 'N1', 'Văn bản học thuật', '15–20 phút']
+    ];
+    const list = document.getElementById('reading-level-list');
+    if (list) list.innerHTML = levels.map(([id, name, desc, time]) => `
+        <button class="reading-level-card" onclick="TaiDanhSachBaiDoc('${id}')">
+            <span class="level-orb">${name}</span><span><b>JLPT ${name}</b><small>${desc}</small></span><em>${time} ›</em>
+        </button>`).join('');
+    ChuyenTab('man-reading-levels');
+}
+
+async function TaiDanhSachBaiDoc(level) {
+    readingLevel = level;
+    ChuyenTab('man-reading-lessons');
+    const title = document.getElementById('reading-list-title');
+    const list = document.getElementById('reading-lesson-list');
+    if (title) title.textContent = `JLPT ${level.toUpperCase()}`;
+    if (list) list.innerHTML = '<div class="reading-loading">Đang mở tủ bài đọc…</div>';
+    try {
+        if (!readingCache[level]) {
+            const response = await fetch(`./reading/${level}.json?v=2`);
+            if (!response.ok) throw new Error('Không tải được dữ liệu');
+            readingCache[level] = await response.json();
+        }
+        const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
+        if (list) list.innerHTML = readingCache[level].map((lesson, index) => `
+            <button class="reading-lesson-card" onclick="MoBaiDoc(${index})">
+                <span class="lesson-number">${String(index + 1).padStart(2, '0')}</span>
+                <span><small>${lesson.type || '短文・ĐOẠN VĂN NGẮN'}</small><b>${lesson.title}</b><em>${lesson.summary}</em></span>
+                <i>${completed[`${level}-${lesson.id}`] ? '✓' : lesson.minutes + ' phút'}</i>
+            </button>`).join('');
+    } catch (error) {
+        if (list) list.innerHTML = '<div class="reading-error">Không tải được bài đọc. Hãy kiểm tra mạng và thử lại.</div>';
+    }
+}
+
+function MoBaiDoc(index) {
+    readingLesson = readingCache[readingLevel]?.[index];
+    if (!readingLesson) return;
+    readingAnswered = new Set();
+    document.getElementById('reading-detail-level').textContent = `JLPT ${readingLevel.toUpperCase()} · ${readingLesson.type}`;
+    document.getElementById('reading-detail-title').textContent = readingLesson.title;
+    document.getElementById('reading-time').textContent = `${readingLesson.minutes} phút`;
+    document.getElementById('reading-passage').innerHTML = readingLesson.passage;
+    document.getElementById('reading-translation').textContent = readingLesson.translation;
+    document.getElementById('reading-translation').classList.add('an-giau');
+    document.getElementById('translation-toggle').classList.remove('active');
+    document.getElementById('reading-questions').innerHTML = readingLesson.questions.map((q, qi) => `
+        <article class="reading-question" id="reading-q-${qi}"><p><span>${qi + 1}</span>${q.question}</p><div>${q.options.map((option, oi) => `<button onclick="TraLoiDocHieu(${qi}, ${oi}, this)">${option}</button>`).join('')}</div><aside class="an-giau">${q.explanation}</aside></article>`).join('');
+    ChuyenTab('man-reading-detail');
+    document.querySelector('.app-main')?.scrollTo({ top: 0 });
+}
+
+function TraLoiDocHieu(questionIndex, optionIndex, button) {
+    if (readingAnswered.has(questionIndex)) return;
+    readingAnswered.add(questionIndex);
+    const question = readingLesson.questions[questionIndex];
+    const card = document.getElementById(`reading-q-${questionIndex}`);
+    const buttons = [...card.querySelectorAll('button')];
+    buttons.forEach((item, index) => {
+        item.disabled = true;
+        if (index === question.answer) item.classList.add('correct');
+    });
+    if (optionIndex !== question.answer) button.classList.add('wrong');
+    card.querySelector('aside').classList.remove('an-giau');
+    if (optionIndex === question.answer) CongDiemXP(5);
+    if (readingAnswered.size === readingLesson.questions.length) {
+        const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
+        completed[`${readingLevel}-${readingLesson.id}`] = true;
+        localStorage.setItem('reading_completed', JSON.stringify(completed));
+    }
+}
+
+function BatTatBanDich() {
+    const translation = document.getElementById('reading-translation');
+    const button = document.getElementById('translation-toggle');
+    translation.classList.toggle('an-giau');
+    button.classList.toggle('active', !translation.classList.contains('an-giau'));
+}
+
+function DocThanhTieng() {
+    if (!readingLesson || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const text = document.getElementById('reading-passage').textContent;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = .84;
+    speechSynthesis.speak(utterance);
+}
+
+function DongBaiDoc() {
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    TaiDanhSachBaiDoc(readingLevel);
 }
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -21,12 +21,44 @@
         <main class="app-main">
             
             <section id="man-home" class="man-hinh active">
-                <div class="welcome">Chào bạn! Chọn một danh mục dưới thanh Menu để bắt đầu kích hoạt bộ não.</div>
+                <div class="home-hero">
+                    <span class="eyebrow">JLPT STUDY SYSTEM</span>
+                    <h1>Mỗi ngày tiến bộ<br><em>một chút tiếng Nhật.</em></h1>
+                    <p>Kanji, ngữ pháp, đọc hiểu và đề luyện được thiết kế thành một lộ trình thống nhất.</p>
+                    <button onclick="ChuyenTab('man-study-hub')">Tiếp tục học →</button>
+                </div>
                 <div class="huong-dan-box">
                     <p>⚡ <strong>HỌC KANJI:</strong> Cày từ vựng từ N5 đến N1 kèm timeline âm thanh sinh động.</p>
                     <p>📚 <strong>NGỮ PHÁP:</strong> Trọn gói cấu trúc từ N5 đến N1 chống nản có Furigana trực quan.</p>
+                    <p>📖 <strong>ĐỌC HIỂU:</strong> Đọc theo cấp độ, làm câu hỏi và xem giải thích ngay sau bài.</p>
                     <p>⚔️ <strong>PHẦN TEST:</strong> Đấu trường trắc nghiệm tính điểm nâng cao phản xạ.</p>
                 </div>
+            </section>
+
+            <section id="man-study-hub" class="man-hinh">
+                <div class="section-heading"><span class="eyebrow">LỘ TRÌNH HỌC</span><h2>Hôm nay học gì?</h2><p>Chọn một kỹ năng và tiếp tục đúng nhịp của bạn.</p></div>
+                <div class="study-grid">
+                    <button class="study-card kanji-card" onclick="ChuyenTab('man-kanji')"><span>漢</span><div><small>TỪ VỰNG & VIẾT</small><h3>Kanji</h3><p>Flashcard, phát âm và luyện viết tay.</p></div><b>→</b></button>
+                    <button class="study-card grammar-card" onclick="ChuyenTab('man-grammar-levels')"><span>文</span><div><small>MẪU CÂU</small><h3>Ngữ pháp</h3><p>Cấu trúc, ví dụ và furigana trực quan.</p></div><b>→</b></button>
+                    <button class="study-card reading-card" onclick="MoCapDoDocHieu()"><span>読</span><div><small>LUYỆN ĐỌC</small><h3>Đọc hiểu</h3><p>Bài đọc ngắn, câu hỏi và giải thích.</p></div><b>→</b></button>
+                </div>
+            </section>
+
+            <section id="man-reading-levels" class="man-hinh">
+                <div class="section-heading"><span class="eyebrow">読解・DOKKAI</span><h2>Đọc hiểu JLPT</h2><p>Chọn cấp độ. Nội dung chỉ được tải khi bạn mở để app luôn nhẹ.</p></div>
+                <div id="reading-level-list" class="reading-level-list"></div>
+            </section>
+
+            <section id="man-reading-lessons" class="man-hinh">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">ĐỌC HIỂU</span><h2 id="reading-list-title">JLPT N5</h2></div><button class="nut-quay-lai" onclick="MoCapDoDocHieu()">QUAY LẠI</button></div>
+                <div id="reading-lesson-list" class="reading-lesson-list"></div>
+            </section>
+
+            <section id="man-reading-detail" class="man-hinh reading-detail">
+                <div class="thanh-dieu-huong"><div><span id="reading-detail-level" class="eyebrow">JLPT N5</span><h2 id="reading-detail-title">Bài đọc</h2></div><button class="nut-quay-lai" onclick="DongBaiDoc()">QUAY LẠI</button></div>
+                <div class="reading-toolbar"><button onclick="DocThanhTieng()">🔊 Nghe</button><button id="translation-toggle" onclick="BatTatBanDich()">🇻🇳 Bản dịch</button><span id="reading-time">5 phút</span></div>
+                <article class="passage-card"><div id="reading-passage" class="japanese-passage"></div><div id="reading-translation" class="reading-translation an-giau"></div></article>
+                <div><span class="eyebrow">CÂU HỎI</span><div id="reading-questions" class="reading-questions"></div></div>
             </section>
 
             <section id="man-kanji" class="man-hinh">
@@ -273,13 +305,13 @@
                 <span class="nav-icon">🏠</span>
                 <span class="nav-text">Trang Chủ</span>
             </button>
-            <button class="nav-item" id="btn-nav-kanji" onclick="ChuyenTab('man-kanji')">
-                <span class="nav-icon">🎯</span>
-                <span class="nav-text">Học Kanji</span>
+            <button class="nav-item" id="btn-nav-study" onclick="ChuyenTab('man-study-hub')">
+                <span class="nav-icon">🎓</span>
+                <span class="nav-text">Học tập</span>
             </button>
-            <button class="nav-item" id="btn-nav-grammar" onclick="ChuyenTab('man-grammar-levels')">
-                <span class="nav-icon">📚</span>
-                <span class="nav-text">Ngữ Pháp</span>
+            <button class="nav-item" id="btn-nav-reading" onclick="MoCapDoDocHieu()">
+                <span class="nav-icon">📖</span>
+                <span class="nav-text">Đọc hiểu</span>
             </button>
             <button class="nav-item" id="btn-nav-test" onclick="ChuyenTab('man-test-levels')">
                 <span class="nav-icon">⚔️</span>

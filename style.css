@@ -1344,3 +1344,33 @@ transition:
         width: 160px;
     }
 }
+
+/* ==========================================
+   PRO LEARNING HUB + READING
+========================================== */
+.eyebrow { color:#00ffcc; font-size:.67rem; font-weight:900; letter-spacing:.16em; }
+.home-hero { position:relative; overflow:hidden; padding:28px 22px; border:1px solid rgba(0,255,204,.22); border-radius:22px; background:linear-gradient(145deg,#111b2e,#09101d); box-shadow:0 18px 45px rgba(0,0,0,.28); }
+.home-hero::after { content:'日'; position:absolute; right:-14px; bottom:-45px; color:rgba(0,255,204,.055); font-family:serif; font-size:11rem; }
+.home-hero h1 { position:relative; margin:9px 0 12px; color:#fff; font-size:clamp(1.75rem,8vw,2.45rem); line-height:1.08; }
+.home-hero h1 em { color:#00ffcc; font-style:normal; }
+.home-hero p { position:relative; max-width:34rem; color:#94a3b8; font-size:.86rem; line-height:1.65; }
+.home-hero button { position:relative; margin-top:20px; padding:12px 18px; color:#04110e; background:#00ffcc; border:0; border-radius:12px; font-weight:900; cursor:pointer; }
+.section-heading h2 { margin:5px 0; font-size:1.65rem; }
+.section-heading p { color:#94a3b8; font-size:.82rem; line-height:1.55; }
+.study-grid { display:grid; gap:12px; }
+.study-card { display:grid; grid-template-columns:56px 1fr auto; align-items:center; gap:13px; width:100%; padding:17px; color:#fff; text-align:left; background:#101827; border:1px solid rgba(148,163,184,.14); border-radius:17px; cursor:pointer; }
+.study-card>span { display:grid; place-items:center; width:54px; height:54px; color:#00ffcc; background:rgba(0,255,204,.08); border:1px solid rgba(0,255,204,.22); border-radius:15px; font:700 1.8rem serif; }
+.study-card small,.reading-lesson-card small { color:#64748b; font-size:.58rem; font-weight:900; letter-spacing:.11em; }
+.study-card h3 { margin:2px 0; font-size:1.05rem; }.study-card p { color:#94a3b8; font-size:.72rem; }.study-card b { color:#00ffcc; }
+.grammar-card>span { color:#c084fc; background:rgba(192,132,252,.08); border-color:rgba(192,132,252,.22); }.reading-card>span { color:#38bdf8; background:rgba(56,189,248,.08); border-color:rgba(56,189,248,.22); }
+.reading-level-list,.reading-lesson-list { display:grid; gap:10px; }
+.reading-level-card,.reading-lesson-card { display:grid; align-items:center; width:100%; color:#e2e8f0; text-align:left; background:#101827; border:1px solid rgba(148,163,184,.14); border-radius:16px; cursor:pointer; }
+.reading-level-card { grid-template-columns:52px 1fr auto; gap:12px; padding:13px; }.level-orb { display:grid; place-items:center; width:48px; height:48px; color:#08111d; background:linear-gradient(135deg,#00ffcc,#38bdf8); border-radius:14px; font-weight:950; }
+.reading-level-card span b,.reading-level-card span small { display:block; }.reading-level-card span small { margin-top:3px; color:#94a3b8; font-size:.7rem; }.reading-level-card em { color:#64748b; font-size:.65rem; font-style:normal; }
+.reading-lesson-card { grid-template-columns:38px 1fr auto; gap:11px; padding:15px 13px; }.lesson-number { color:#475569; font-size:1.12rem; font-weight:900; }.reading-lesson-card span>* { display:block; }.reading-lesson-card b { margin:3px 0; font-size:.93rem; }.reading-lesson-card em { color:#94a3b8; font-size:.7rem; font-style:normal; }.reading-lesson-card>i { color:#00ffcc; font-size:.64rem; font-style:normal; white-space:nowrap; }
+.reading-loading,.reading-error { padding:28px; color:#94a3b8; text-align:center; }.reading-error { color:#fb7185; }
+.reading-toolbar { display:flex; align-items:center; gap:8px; }.reading-toolbar button { padding:8px 11px; color:#cbd5e1; background:#111a2e; border:1px solid rgba(148,163,184,.2); border-radius:10px; font-weight:700; cursor:pointer; }.reading-toolbar button.active { color:#001410; background:#00ffcc; }.reading-toolbar span { margin-left:auto; color:#64748b; font-size:.72rem; }
+.passage-card { padding:20px; background:#f8fafc; border-radius:17px; box-shadow:0 15px 40px rgba(0,0,0,.25); }.japanese-passage { color:#172033; font-family:'Yu Mincho','Hiragino Mincho ProN',serif; font-size:1.08rem; line-height:2.05; }.reading-translation { margin-top:17px; padding-top:15px; color:#475569; border-top:1px solid #e2e8f0; font-size:.82rem; line-height:1.7; }
+.reading-questions { display:grid; gap:13px; margin-top:8px; }.reading-question { padding:16px; background:#101827; border:1px solid rgba(148,163,184,.14); border-radius:15px; }.reading-question p { display:flex; gap:9px; margin-bottom:12px; line-height:1.55; }.reading-question p span { display:grid; place-items:center; flex:0 0 24px; height:24px; color:#001410; background:#00ffcc; border-radius:50%; font-size:.7rem; font-weight:900; }.reading-question>div { display:grid; gap:8px; }.reading-question button { padding:11px 12px; color:#cbd5e1; text-align:left; background:#151f32; border:1px solid rgba(148,163,184,.16); border-radius:10px; cursor:pointer; }.reading-question button.correct { color:#00140e; background:#34d399; border-color:#34d399; }.reading-question button.wrong { color:#fff; background:#e11d48; border-color:#e11d48; }.reading-question aside { margin-top:11px; padding:11px; color:#bfdbfe; background:rgba(56,189,248,.08); border-radius:9px; font-size:.73rem; line-height:1.55; }
+@media (min-width:760px){.study-grid{grid-template-columns:repeat(3,1fr)}.study-card{grid-template-columns:1fr;align-content:start}.study-card>b{display:none}.reading-level-list{grid-template-columns:1fr 1fr}.passage-card{padding:30px}.japanese-passage{font-size:1.18rem}}
+@media (max-width:360px){.reading-level-card em{display:none}.reading-level-card{grid-template-columns:48px 1fr}.app-navigation .nav-text{font-size:.59rem}}
