@@ -32,6 +32,12 @@ let writingCtx = null;
 let strokePaths = [];
 let strokeStep = 0;
 let strokeAnimationTimer = null;
+let cheDoThuThachViet = false;
+let duLieuThuThachViet = [];
+let mucThuThachHienTai = null;
+let kanjiThuThachTruoc = '';
+let daChamDiemThuThach = false;
+let chuMauDaMo = false;
 
 // --- BIẾN PHỤC VỤ CHIA NGÀY HỌC DÙNG CHUNG ---
 const WORDS_PER_DAY = 10;       // Mỗi ngày học 10 từ
@@ -123,6 +129,8 @@ function MoChonNgay(capDo) {
 
     const vungChuaNut = document.getElementById('vung-chua-nut-ngay');
     if (!vungChuaNut) return;
+    const nutThuThach = document.getElementById('btn-thu-thach-viet');
+    if (nutThuThach) nutThuThach.hidden = capDo.toLowerCase() !== 'n5';
     vungChuaNut.innerHTML = `<div style="color:#00ffcc; grid-column: span 4;">⚡ Đang quét tệp dữ liệu cấp độ...</div>`;
 
     // Xác định đúng tên file json để tải về giống logic cũ của bro
@@ -133,6 +141,7 @@ function MoChonNgay(capDo) {
         .then(res => { if (!res.ok) throw new Error(); return res.json(); })
         .then(data => {
             mảngDữLiệuGốcĐãTải = data; // Lưu mảng gốc vào biến tạm
+            if (capDo.toLowerCase() === 'n5') duLieuThuThachViet = data;
             
             const tongSoNgay = Math.ceil(mảngDữLiệuGốcĐãTải.length / WORDS_PER_DAY);
             vungChuaNut.innerHTML = ''; // Xóa chữ loading
@@ -593,9 +602,95 @@ function ResetToanBoTienDoFile() {
 // =========================================================================
 // LUYỆN VIẾT KANJI: THỨ TỰ NÉT + CANVAS CHO CHUỘT/CẢM ỨNG/BÚT
 // =========================================================================
+function TachAmHanViet(item) {
+    return (item?.meaning || '').split('(')[0].trim().toUpperCase() || 'KANJI';
+}
+
+function TachNghiaViet(item) {
+    const meaning = item?.meaning || '';
+    const match = meaning.match(/\(([^)]+)\)/);
+    return match ? match[1] : meaning;
+}
+
+function BatDauThuThachViet(capDo = 'n5') {
+    const moThuThach = data => {
+        duLieuThuThachViet = data.filter(item => item.kanji && item.meaning);
+        if (!duLieuThuThachViet.length) return;
+        manHinhTruocLuyenViet = 'man-hinh-chon-ngay';
+        cheDoThuThachViet = true;
+        CauThuThachTiepTheo();
+    };
+
+    if (capDo === 'n5' && duLieuThuThachViet.length) {
+        moThuThach(duLieuThuThachViet);
+        return;
+    }
+
+    fetch(`./${capDo}.json?v=${new Date().getTime()}`)
+        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+        .then(moThuThach)
+        .catch(() => {
+            const vung = document.getElementById('vung-chua-nut-ngay');
+            if (vung) vung.insertAdjacentHTML('beforebegin', '<p class="challenge-load-error">Không tải được thử thách. Bro thử lại nhé.</p>');
+        });
+}
+
+function CauThuThachTiepTheo() {
+    if (!duLieuThuThachViet.length) return;
+    let item = duLieuThuThachViet[Math.floor(Math.random() * duLieuThuThachViet.length)];
+    if (duLieuThuThachViet.length > 1) {
+        while (item.kanji === kanjiThuThachTruoc) {
+            item = duLieuThuThachViet[Math.floor(Math.random() * duLieuThuThachViet.length)];
+        }
+    }
+    kanjiThuThachTruoc = item.kanji;
+    mucThuThachHienTai = item;
+    daChamDiemThuThach = false;
+    chuMauDaMo = false;
+    kanjiDangLuyen = Array.from(item.kanji)[0];
+
+    const screen = document.getElementById('man-luyen-viet');
+    screen.classList.add('challenge-mode');
+    screen.classList.remove('challenge-revealed');
+    document.getElementById('writing-screen-heading').textContent = 'THỬ THÁCH VIẾT N5';
+    document.getElementById('writing-xp-preview').textContent = '+20 XP';
+    document.getElementById('writing-challenge-panel').hidden = false;
+    document.getElementById('challenge-han-viet').textContent = TachAmHanViet(item);
+    document.getElementById('challenge-meaning').textContent = `Nghĩa: ${TachNghiaViet(item)}`;
+    document.getElementById('challenge-result').className = 'challenge-result';
+    document.getElementById('challenge-result').textContent = 'Kanji đang được giấu. Hãy viết từ trí nhớ!';
+    document.getElementById('challenge-next').hidden = true;
+    document.getElementById('practice-heading').textContent = 'Tự viết chữ Kanji';
+    document.getElementById('kanji-watermark').textContent = kanjiDangLuyen;
+    document.getElementById('kanji-watermark').style.visibility = 'hidden';
+    const completeButton = document.getElementById('complete-writing-button');
+    completeButton.disabled = false;
+    completeButton.textContent = '🔍 Kiểm tra bài viết';
+    completeButton.classList.remove('success');
+
+    ChuyenTab('man-luyen-viet');
+    requestAnimationFrame(() => {
+        KhoiTaoBangViet();
+        TaiThuTuNet(kanjiDangLuyen);
+    });
+}
+
+function ThietLapGiaoDienLuyenVietThuong() {
+    cheDoThuThachViet = false;
+    const screen = document.getElementById('man-luyen-viet');
+    screen.classList.remove('challenge-mode', 'challenge-revealed');
+    document.getElementById('writing-challenge-panel').hidden = true;
+    document.getElementById('writing-screen-heading').innerHTML = 'LUYỆN VIẾT CHỮ <span id="writing-title-kanji">字</span>';
+    document.getElementById('practice-heading').textContent = 'Viết theo chữ mẫu';
+    const button = document.getElementById('complete-writing-button');
+    button.disabled = false;
+    button.textContent = '✓ Hoàn thành';
+}
+
 function MoLuyenViet(chuKanji) {
     if (!chuKanji) return;
     ClearAllTimers();
+    ThietLapGiaoDienLuyenVietThuong();
     manHinhTruocLuyenViet = document.querySelector('.man-hinh.active')?.id || 'man-hoc-chi-tiet';
     kanjiDangLuyen = Array.from(chuKanji)[0];
 
@@ -613,6 +708,7 @@ function MoLuyenViet(chuKanji) {
 
 function DongLuyenViet() {
     ClearAllTimers();
+    cheDoThuThachViet = false;
     ChuyenTab(manHinhTruocLuyenViet || 'man-hoc-chi-tiet');
 }
 
@@ -817,6 +913,143 @@ function DoiDoMoChuMau(value) {
     }
 }
 
+function LayMauTheoDoDai(points, soDiem = 24) {
+    if (!points?.length) return [];
+    if (points.length === 1) return Array.from({ length: soDiem }, () => ({ ...points[0] }));
+    const doan = [];
+    let tong = 0;
+    for (let i = 1; i < points.length; i++) {
+        const dai = Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+        doan.push(dai);
+        tong += dai;
+    }
+    if (!tong) return Array.from({ length: soDiem }, () => ({ ...points[0] }));
+
+    return Array.from({ length: soDiem }, (_, index) => {
+        const dich = (index / (soDiem - 1)) * tong;
+        let daDi = 0;
+        for (let i = 0; i < doan.length; i++) {
+            if (daDi + doan[i] >= dich || i === doan.length - 1) {
+                const tiLe = doan[i] ? (dich - daDi) / doan[i] : 0;
+                return {
+                    x: points[i].x + (points[i + 1].x - points[i].x) * tiLe,
+                    y: points[i].y + (points[i + 1].y - points[i].y) * tiLe
+                };
+            }
+            daDi += doan[i];
+        }
+        return { ...points[points.length - 1] };
+    });
+}
+
+function LayMauPathSVG(path, soDiem = 24) {
+    const length = Math.max(path.getTotalLength(), 1);
+    return Array.from({ length: soDiem }, (_, index) => {
+        const point = path.getPointAtLength((index / (soDiem - 1)) * length);
+        return { x: point.x, y: point.y };
+    });
+}
+
+function ChuanHoaNhomNet(nhomNet) {
+    const tatCa = nhomNet.flat();
+    const minX = Math.min(...tatCa.map(p => p.x));
+    const maxX = Math.max(...tatCa.map(p => p.x));
+    const minY = Math.min(...tatCa.map(p => p.y));
+    const maxY = Math.max(...tatCa.map(p => p.y));
+    const scale = Math.max(maxX - minX, maxY - minY, 1);
+    const lechX = (scale - (maxX - minX)) / 2;
+    const lechY = (scale - (maxY - minY)) / 2;
+    return nhomNet.map(net => net.map(p => ({
+        x: (p.x - minX + lechX) / scale,
+        y: (p.y - minY + lechY) / scale
+    })));
+}
+
+function ChamDiemChuViet() {
+    const netNguoiHoc = cacNetDaViet.filter(net => net.length >= 2).map(net => LayMauTheoDoDai(net));
+    const netMau = strokePaths.map(path => LayMauPathSVG(path));
+    if (!netNguoiHoc.length || !netMau.length) return { diem: 0, dungSoNet: false, saiLechNet: 99 };
+
+    const nguoiChuan = ChuanHoaNhomNet(netNguoiHoc);
+    const mauChuan = ChuanHoaNhomNet(netMau);
+    const soNetSoSanh = Math.min(nguoiChuan.length, mauChuan.length);
+    let tongSaiLech = 0;
+
+    for (let i = 0; i < soNetSoSanh; i++) {
+        let saiLechNet = 0;
+        for (let j = 0; j < nguoiChuan[i].length; j++) {
+            saiLechNet += Math.hypot(
+                nguoiChuan[i][j].x - mauChuan[i][j].x,
+                nguoiChuan[i][j].y - mauChuan[i][j].y
+            );
+        }
+        tongSaiLech += saiLechNet / nguoiChuan[i].length;
+    }
+
+    const saiLechTrungBinh = tongSaiLech / soNetSoSanh;
+    const saiLechSoNet = Math.abs(netNguoiHoc.length - netMau.length);
+    const diemSoNet = saiLechSoNet === 0 ? 30 : saiLechSoNet === 1 ? 10 : 0;
+    const diemHinhDang = Math.max(0, 70 * (1 - saiLechTrungBinh / 0.34));
+    const diem = Math.round(Math.max(0, Math.min(100, diemSoNet + diemHinhDang - Math.max(0, saiLechSoNet - 1) * 12)));
+    return { diem, dungSoNet: saiLechSoNet === 0, saiLechNet: saiLechSoNet };
+}
+
+function MoDapAnThuThach() {
+    chuMauDaMo = true;
+    const screen = document.getElementById('man-luyen-viet');
+    screen.classList.add('challenge-revealed');
+    document.getElementById('kanji-watermark').style.visibility = 'visible';
+    document.getElementById('kanji-watermark').style.opacity = '.16';
+    document.getElementById('practice-heading').textContent = `Viết lại chữ ${kanjiDangLuyen}`;
+    PhatLaiThuTuNet();
+}
+
+function KiemTraThuThachViet() {
+    const result = document.getElementById('challenge-result');
+    const button = document.getElementById('complete-writing-button');
+    if (daChamDiemThuThach) return;
+    if (!strokePaths.length) {
+        result.className = 'challenge-result warning';
+        result.textContent = 'Đang tải dữ liệu nét, chờ một chút nhé…';
+        return;
+    }
+    if (!cacNetDaViet.some(net => net.length >= 2)) {
+        result.className = 'challenge-result warning';
+        result.textContent = 'Bro hãy viết chữ vào ô trước nhé ✍️';
+        return;
+    }
+
+    const ketQua = ChamDiemChuViet();
+    const dat = ketQua.diem >= 62 && ketQua.saiLechNet <= 1;
+    if (dat) {
+        daChamDiemThuThach = true;
+        diemXP += 20;
+        localStorage.setItem('kanji_pure_xp', diemXP);
+        document.getElementById('id-xp').textContent = diemXP;
+        document.getElementById('writing-xp-preview').textContent = '✓ +20 XP';
+        result.className = 'challenge-result correct';
+        result.innerHTML = `🎉 Chính xác! Đáp án là <b>${kanjiDangLuyen}</b> • ${ketQua.diem}/100 điểm`;
+        button.textContent = '✓ Đã hoàn thành';
+        button.disabled = true;
+        button.classList.add('success');
+        document.getElementById('challenge-next').hidden = false;
+        document.getElementById('kanji-watermark').style.visibility = 'visible';
+        document.getElementById('kanji-watermark').style.opacity = '.1';
+    } else {
+        result.className = 'challenge-result wrong';
+        const goiYNet = ketQua.dungSoNet ? 'Số nét đúng, hãy chỉnh hình dáng và hướng nét.' : `Bạn viết lệch ${ketQua.saiLechNet} nét so với mẫu.`;
+        result.innerHTML = `Chưa đúng rồi • ${ketQua.diem}/100 điểm<br><b>Đáp án: ${kanjiDangLuyen}</b> — ${goiYNet}`;
+        button.textContent = '🔁 Kiểm tra lại';
+        MoDapAnThuThach();
+        XoaBangViet();
+    }
+}
+
+function XuLyNutHoanThanhViet() {
+    if (cheDoThuThachViet) KiemTraThuThachViet();
+    else HoanThanhLuyenViet();
+}
+
 function HoanThanhLuyenViet() {
     if (cacNetDaViet.length === 0) {
         const status = document.getElementById('stroke-status');
@@ -835,7 +1068,7 @@ function HoanThanhLuyenViet() {
         if (xpElement) xpElement.textContent = diemXP;
     }
     document.getElementById('writing-xp-preview').textContent = '✓ Đã luyện';
-    const completeButton = document.querySelector('.complete-writing');
+    const completeButton = document.getElementById('complete-writing-button');
     completeButton.textContent = daNhanXP ? '✓ Đã hoàn thành' : '🎉 +10 XP';
     completeButton.classList.add('success');
     setTimeout(() => {

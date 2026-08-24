@@ -8,7 +8,7 @@
       content="width=device-width,
                initial-scale=1,
                viewport-fit=cover">
-    <link rel="stylesheet" href="./style.css?v=20260824-n5-clean-1">
+    <link rel="stylesheet" href="./style.css?v=20260824-writing-game">
 </head>
 <body>
 
@@ -46,6 +46,12 @@
                     <button class="nut-quay-lai" onclick="ChuyenTab('man-kanji')">QUAY LẠI</button>
                 </div>
                 <div class="welcome" style="margin-top: 15px;">Mỗi ngày cày 10 từ cốt lõi. Chọn ngày học của bạn:</div>
+
+                <button id="btn-thu-thach-viet" class="writing-challenge-entry" type="button" onclick="BatDauThuThachViet('n5')">
+                    <span>🎮</span>
+                    <div><b>THỬ THÁCH VIẾT N5</b><small>Nhìn âm Hán Việt • tự viết Kanji • nhận XP</small></div>
+                    <i>CHƠI →</i>
+                </button>
                 
                 <div id="vung-chua-nut-ngay" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; max-height: 400px; overflow-y: auto; margin: 20px auto; padding: 10px; border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; background: rgba(0,0,0,0.2);">
                     </div>
@@ -178,13 +184,22 @@
                     <button class="writing-back" type="button" onclick="DongLuyenViet()">‹ Trở lại</button>
                     <div>
                         <small>KANJI WRITING</small>
-                        <h2>LUYỆN VIẾT CHỮ <span id="writing-title-kanji">字</span></h2>
+                        <h2 id="writing-screen-heading">LUYỆN VIẾT CHỮ <span id="writing-title-kanji">字</span></h2>
                     </div>
                     <div class="writing-streak">✍️ <span id="writing-xp-preview">+10 XP</span></div>
                 </div>
 
+                <div id="writing-challenge-panel" class="writing-challenge-panel" hidden>
+                    <div class="challenge-label">🎮 CÂU HỎI N5</div>
+                    <p>Hãy viết chữ Kanji có âm Hán Việt:</p>
+                    <strong id="challenge-han-viet">NHẤT</strong>
+                    <span id="challenge-meaning">Nghĩa: Một</span>
+                    <div id="challenge-result" class="challenge-result" aria-live="polite"></div>
+                    <button id="challenge-next" type="button" onclick="CauThuThachTiepTheo()" hidden>Chữ tiếp theo →</button>
+                </div>
+
                 <div class="writing-layout">
-                    <article class="stroke-order-card">
+                    <article id="stroke-order-card" class="stroke-order-card">
                         <div class="writing-section-head">
                             <div>
                                 <small>書き順・KAKIJUN</small>
@@ -206,7 +221,7 @@
                         <div class="writing-section-head">
                             <div>
                                 <small>なぞり書き・TRACE</small>
-                                <h3>Viết theo chữ mẫu</h3>
+                                <h3 id="practice-heading">Viết theo chữ mẫu</h3>
                             </div>
                             <button id="btn-toggle-guide" class="mini-toggle active" type="button" onclick="BatTatChuMau()">👁 Chữ mẫu</button>
                         </div>
@@ -226,7 +241,7 @@
                         <div class="writing-tools">
                             <button type="button" onclick="HoanTacNet()">↶ Hoàn tác</button>
                             <button type="button" onclick="XoaBangViet()">⌫ Xóa hết</button>
-                            <button class="complete-writing" type="button" onclick="HoanThanhLuyenViet()">✓ Hoàn thành</button>
+                            <button id="complete-writing-button" class="complete-writing" type="button" onclick="XuLyNutHoanThanhViet()">✓ Hoàn thành</button>
                         </div>
                     </article>
                 </div>
@@ -273,6 +288,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260824-n5-clean-1"></script>
+    <script src="./script.js?v=20260824-writing-game"></script>
 </body>
 </html>

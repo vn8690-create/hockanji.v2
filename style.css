@@ -1127,6 +1127,171 @@ transition:
     text-align: center;
 }
 
+.writing-challenge-entry {
+    width: min(100%, 500px);
+    margin: 16px auto 4px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #f8fafc;
+    background: linear-gradient(135deg, rgba(236, 72, 153, .22), rgba(124, 58, 237, .24));
+    border: 1px solid rgba(244, 114, 182, .65);
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(124, 58, 237, .2);
+    cursor: pointer;
+    text-align: left;
+}
+
+.writing-challenge-entry[hidden] {
+    display: none;
+}
+
+.writing-challenge-entry > span {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, .08);
+    border-radius: 13px;
+    font-size: 1.45rem;
+}
+
+.writing-challenge-entry > div {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.writing-challenge-entry b {
+    color: #f9a8d4;
+    font-size: .85rem;
+}
+
+.writing-challenge-entry small {
+    color: #cbd5e1;
+    font-size: .69rem;
+}
+
+.writing-challenge-entry i {
+    color: #f9a8d4;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.writing-challenge-panel {
+    padding: 15px;
+    color: #e2e8f0;
+    background: linear-gradient(135deg, rgba(124, 58, 237, .18), rgba(236, 72, 153, .12));
+    border: 1px solid rgba(192, 132, 252, .42);
+    border-radius: 17px;
+    text-align: center;
+}
+
+.writing-challenge-panel[hidden] {
+    display: none;
+}
+
+.challenge-label {
+    color: #f9a8d4;
+    font-size: .65rem;
+    font-weight: 900;
+    letter-spacing: .12em;
+}
+
+.writing-challenge-panel p {
+    margin: 7px 0 3px;
+    color: #cbd5e1;
+    font-size: .78rem;
+}
+
+.writing-challenge-panel > strong {
+    display: block;
+    color: #fff;
+    font-size: 2rem;
+    letter-spacing: .08em;
+    text-shadow: 0 0 18px rgba(244, 114, 182, .55);
+}
+
+.writing-challenge-panel > span {
+    display: block;
+    margin-top: 2px;
+    color: #94a3b8;
+    font-size: .75rem;
+}
+
+.challenge-result {
+    min-height: 20px;
+    margin-top: 10px;
+    color: #94a3b8;
+    font-size: .74rem;
+    line-height: 1.45;
+}
+
+.challenge-result.correct { color: #5eead4; }
+.challenge-result.wrong { color: #fda4af; }
+.challenge-result.warning { color: #fbbf24; }
+.challenge-result b { color: #fff; font-size: 1rem; }
+
+#challenge-next {
+    min-height: 40px;
+    margin-top: 10px;
+    padding: 8px 18px;
+    color: #17051c;
+    background: linear-gradient(135deg, #f9a8d4, #c4b5fd);
+    border: 0;
+    border-radius: 11px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.challenge-mode .stroke-order-card,
+.challenge-mode .mini-toggle,
+.challenge-mode .opacity-control {
+    display: none;
+}
+
+.challenge-mode .writing-layout {
+    display: block;
+}
+
+.challenge-mode .practice-card {
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+.challenge-mode.challenge-revealed .stroke-order-card {
+    display: block;
+}
+
+.challenge-mode.challenge-revealed .writing-layout {
+    display: grid;
+}
+
+.challenge-mode.challenge-revealed .mini-toggle,
+.challenge-mode.challenge-revealed .opacity-control {
+    display: grid;
+}
+
+.challenge-mode .writing-tip {
+    color: #c4b5fd;
+}
+
+.complete-writing:disabled {
+    cursor: default;
+    opacity: .82;
+}
+
+.challenge-load-error {
+    color: #fda4af;
+    font-size: .78rem;
+}
+
 @media (min-width: 760px) {
     .app-container {
         max-width: 980px;
