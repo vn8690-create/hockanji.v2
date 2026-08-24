@@ -316,8 +316,8 @@ function ChayDongThoiGianFlashcard() {
     if (loaiHocHienTai === 'kanji') {
         const chuKanji = item.kanji || item.chu || "字";
         const nghiaGoc = item.meaning || item.nghia || "";
-        const onyomi = item.onyomi || "Chưa cập nhật";
-        const kunyomi = item.kunyomi || "Chưa cập nhật";
+        const onyomi = item.onyomi || "Không có âm On thông dụng";
+        const kunyomi = item.kunyomi || "Không có âm Kun thông dụng";
         const viDu = item.example || item.vi_du || "Chưa có ví dụ";
 
         let amHanViet = "Chưa rõ";
