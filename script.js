@@ -38,6 +38,13 @@ let mucThuThachHienTai = null;
 let kanjiThuThachTruoc = '';
 let daChamDiemThuThach = false;
 let chuMauDaMo = false;
+let soCauThiViet = 10;
+let indexThiViet = 0;
+let tongDiemThiViet = 0;
+let soChuDatThiViet = 0;
+let xpThiViet = 0;
+let danhSachThiViet = [];
+let capDoThiViet = 'n5';
 
 // Đọc hiểu được tải theo từng level để không làm nặng lần mở app đầu tiên
 let readingCache = {};
@@ -112,7 +119,7 @@ function ChuyenTab(idManHinh) {
 
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (idManHinh === 'man-home') document.getElementById('btn-nav-home')?.classList.add('active');
-    if (['man-study-hub', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
+    if (['man-study-hub', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet', 'man-writing-test-levels', 'man-writing-results'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
     if (idManHinh === 'man-test-levels') document.getElementById('btn-nav-test')?.classList.add('active');
     if (['man-reading-levels', 'man-reading-lessons', 'man-reading-detail'].includes(idManHinh)) document.getElementById('btn-nav-reading')?.classList.add('active');
 }
@@ -656,37 +663,61 @@ function TachNghiaViet(item) {
     return match ? match[1] : meaning;
 }
 
-function BatDauThuThachViet(capDo = 'n5') {
-    const moThuThach = data => {
-        duLieuThuThachViet = data.filter(item => item.kanji && item.meaning);
-        if (!duLieuThuThachViet.length) return;
-        manHinhTruocLuyenViet = 'man-hinh-chon-ngay';
-        cheDoThuThachViet = true;
-        CauThuThachTiepTheo();
-    };
-
-    if (capDo === 'n5' && duLieuThuThachViet.length) {
-        moThuThach(duLieuThuThachViet);
-        return;
-    }
-
-    fetch(`./${capDo}.json?v=${new Date().getTime()}`)
-        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-        .then(moThuThach)
-        .catch(() => {
-            const vung = document.getElementById('vung-chua-nut-ngay');
-            if (vung) vung.insertAdjacentHTML('beforebegin', '<p class="challenge-load-error">Không tải được thử thách. Bro thử lại nhé.</p>');
-        });
+function MoManThiViet() {
+    const kyLuc = JSON.parse(localStorage.getItem(`writing_test_best_n5_${soCauThiViet}`) || 'null');
+    const hienKyLuc = document.getElementById('writing-best-score');
+    if (hienKyLuc) hienKyLuc.textContent = kyLuc ? `Kỷ lục: ${kyLuc.score}/100` : 'Kỷ lục: --';
+    ChuyenTab('man-writing-test-levels');
 }
 
-function CauThuThachTiepTheo() {
-    if (!duLieuThuThachViet.length) return;
-    let item = duLieuThuThachViet[Math.floor(Math.random() * duLieuThuThachViet.length)];
-    if (duLieuThuThachViet.length > 1) {
-        while (item.kanji === kanjiThuThachTruoc) {
-            item = duLieuThuThachViet[Math.floor(Math.random() * duLieuThuThachViet.length)];
-        }
+function ChonSoCauThiViet(soCau, nutBam) {
+    soCauThiViet = soCau;
+    document.querySelectorAll('.writing-count-picker button').forEach(nut => nut.classList.remove('active'));
+    nutBam?.classList.add('active');
+    MoManThiViet();
+}
+
+function TronMang(mang) {
+    const ketQua = [...mang];
+    for (let i = ketQua.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [ketQua[i], ketQua[j]] = [ketQua[j], ketQua[i]];
     }
+    return ketQua;
+}
+
+function BatDauBaiTestViet(capDo = 'n5') {
+    capDoThiViet = capDo;
+    const moThuThach = data => {
+        duLieuThuThachViet = data.filter(item => item.kanji && item.meaning);
+        danhSachThiViet = TronMang(duLieuThuThachViet).slice(0, Math.min(soCauThiViet, duLieuThuThachViet.length));
+        if (!danhSachThiViet.length) return;
+        indexThiViet = 0;
+        tongDiemThiViet = 0;
+        soChuDatThiViet = 0;
+        xpThiViet = 0;
+        manHinhTruocLuyenViet = 'man-writing-test-levels';
+        cheDoThuThachViet = true;
+        HienThiCauThiViet();
+    };
+
+    if (capDo === 'n5' && duLieuThuThachViet.length) return moThuThach(duLieuThuThachViet);
+    fetch(`./${capDo}.json?v=3`).then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+    }).then(moThuThach).catch(() => {
+        const man = document.getElementById('man-writing-test-levels');
+        man?.insertAdjacentHTML('beforeend', '<p class="challenge-load-error">Không tải được thử thách. Bro thử lại nhé.</p>');
+    });
+}
+
+function BatDauThuThachViet(capDo = 'n5') {
+    BatDauBaiTestViet(capDo);
+}
+
+function HienThiCauThiViet() {
+    const item = danhSachThiViet[indexThiViet];
+    if (!item) return HienThiKetQuaThiViet();
     kanjiThuThachTruoc = item.kanji;
     mucThuThachHienTai = item;
     daChamDiemThuThach = false;
@@ -696,9 +727,10 @@ function CauThuThachTiepTheo() {
     const screen = document.getElementById('man-luyen-viet');
     screen.classList.add('challenge-mode');
     screen.classList.remove('challenge-revealed');
-    document.getElementById('writing-screen-heading').textContent = 'THỬ THÁCH VIẾT N5';
+    document.getElementById('writing-screen-heading').textContent = `THỬ THÁCH VIẾT ${capDoThiViet.toUpperCase()}`;
     document.getElementById('writing-xp-preview').textContent = '+20 XP';
     document.getElementById('writing-challenge-panel').hidden = false;
+    document.getElementById('challenge-progress').textContent = `CÂU ${indexThiViet + 1} / ${danhSachThiViet.length}`;
     document.getElementById('challenge-han-viet').textContent = TachAmHanViet(item);
     document.getElementById('challenge-meaning').textContent = `Nghĩa: ${TachNghiaViet(item)}`;
     document.getElementById('challenge-result').className = 'challenge-result';
@@ -717,6 +749,29 @@ function CauThuThachTiepTheo() {
         KhoiTaoBangViet();
         TaiThuTuNet(kanjiDangLuyen);
     });
+}
+
+function CauThuThachTiepTheo() {
+    if (!daChamDiemThuThach) return;
+    indexThiViet++;
+    if (indexThiViet >= danhSachThiViet.length) HienThiKetQuaThiViet();
+    else HienThiCauThiViet();
+}
+
+function HienThiKetQuaThiViet() {
+    const diemTrungBinh = Math.round(tongDiemThiViet / Math.max(danhSachThiViet.length, 1));
+    const key = `writing_test_best_${capDoThiViet}_${soCauThiViet}`;
+    const kyLucCu = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!kyLucCu || diemTrungBinh > kyLucCu.score) {
+        localStorage.setItem(key, JSON.stringify({ score: diemTrungBinh, correct: soChuDatThiViet, date: Date.now() }));
+    }
+    document.getElementById('writing-final-score').textContent = diemTrungBinh;
+    document.getElementById('writing-correct-count').textContent = `${soChuDatThiViet}/${danhSachThiViet.length}`;
+    document.getElementById('writing-xp-earned').textContent = `+${xpThiViet} XP`;
+    document.getElementById('writing-result-title').textContent = diemTrungBinh >= 85 ? 'Nét bút rất chắc!' : diemTrungBinh >= 62 ? 'Đạt thử thách!' : 'Luyện thêm một vòng nhé!';
+    document.getElementById('writing-result-summary').textContent = `Điểm trung bình ${diemTrungBinh}/100 · ${soChuDatThiViet} chữ đạt từ 62 điểm.`;
+    cheDoThuThachViet = false;
+    ChuyenTab('man-writing-results');
 }
 
 function ThietLapGiaoDienLuyenVietThuong() {
@@ -1012,7 +1067,7 @@ function ChuanHoaNhomNet(nhomNet) {
 function ChamDiemChuViet() {
     const netNguoiHoc = cacNetDaViet.filter(net => net.length >= 2).map(net => LayMauTheoDoDai(net));
     const netMau = strokePaths.map(path => LayMauPathSVG(path));
-    if (!netNguoiHoc.length || !netMau.length) return { diem: 0, dungSoNet: false, saiLechNet: 99 };
+    if (!netNguoiHoc.length || !netMau.length) return { diem: 0, diemSoNet: 0, diemHinhDang: 0, dungSoNet: false, saiLechNet: 99 };
 
     const nguoiChuan = ChuanHoaNhomNet(netNguoiHoc);
     const mauChuan = ChuanHoaNhomNet(netMau);
@@ -1035,7 +1090,7 @@ function ChamDiemChuViet() {
     const diemSoNet = saiLechSoNet === 0 ? 30 : saiLechSoNet === 1 ? 10 : 0;
     const diemHinhDang = Math.max(0, 70 * (1 - saiLechTrungBinh / 0.34));
     const diem = Math.round(Math.max(0, Math.min(100, diemSoNet + diemHinhDang - Math.max(0, saiLechSoNet - 1) * 12)));
-    return { diem, dungSoNet: saiLechSoNet === 0, saiLechNet: saiLechSoNet };
+    return { diem, diemSoNet, diemHinhDang: Math.round(diemHinhDang), dungSoNet: saiLechSoNet === 0, saiLechNet: saiLechSoNet };
 }
 
 function MoDapAnThuThach() {
@@ -1065,28 +1120,32 @@ function KiemTraThuThachViet() {
 
     const ketQua = ChamDiemChuViet();
     const dat = ketQua.diem >= 62 && ketQua.saiLechNet <= 1;
+    daChamDiemThuThach = true;
+    tongDiemThiViet += ketQua.diem;
+    MoDapAnThuThach();
+    button.disabled = true;
+    document.getElementById('challenge-next').hidden = false;
     if (dat) {
-        daChamDiemThuThach = true;
-        diemXP += 20;
+        const thuongXP = ketQua.diem >= 85 ? 20 : 10;
+        soChuDatThiViet++;
+        xpThiViet += thuongXP;
+        diemXP += thuongXP;
         localStorage.setItem('kanji_pure_xp', diemXP);
         document.getElementById('id-xp').textContent = diemXP;
-        document.getElementById('writing-xp-preview').textContent = '✓ +20 XP';
+        document.getElementById('writing-xp-preview').textContent = `✓ +${thuongXP} XP`;
         result.className = 'challenge-result correct';
-        result.innerHTML = `🎉 Chính xác! Đáp án là <b>${kanjiDangLuyen}</b> • ${ketQua.diem}/100 điểm`;
+        result.innerHTML = `🎉 Đạt! Đáp án <b>${kanjiDangLuyen}</b> • ${ketQua.diem}/100<br><small>Số nét ${ketQua.diemSoNet}/30 · Hình dáng & hướng nét ${ketQua.diemHinhDang}/70</small>`;
         button.textContent = '✓ Đã hoàn thành';
-        button.disabled = true;
         button.classList.add('success');
-        document.getElementById('challenge-next').hidden = false;
         document.getElementById('kanji-watermark').style.visibility = 'visible';
         document.getElementById('kanji-watermark').style.opacity = '.1';
     } else {
         result.className = 'challenge-result wrong';
         const goiYNet = ketQua.dungSoNet ? 'Số nét đúng, hãy chỉnh hình dáng và hướng nét.' : `Bạn viết lệch ${ketQua.saiLechNet} nét so với mẫu.`;
-        result.innerHTML = `Chưa đúng rồi • ${ketQua.diem}/100 điểm<br><b>Đáp án: ${kanjiDangLuyen}</b> — ${goiYNet}`;
-        button.textContent = '🔁 Kiểm tra lại';
-        MoDapAnThuThach();
-        XoaBangViet();
+        result.innerHTML = `Chưa đạt • ${ketQua.diem}/100<br><small>Số nét ${ketQua.diemSoNet}/30 · Hình dáng & hướng nét ${ketQua.diemHinhDang}/70</small><br><b>Đáp án: ${kanjiDangLuyen}</b> — ${goiYNet}`;
+        button.textContent = 'Đã chấm điểm';
     }
+    document.getElementById('challenge-next').textContent = indexThiViet + 1 >= danhSachThiViet.length ? 'Xem kết quả →' : 'Chữ tiếp theo →';
 }
 
 function XuLyNutHoanThanhViet() {

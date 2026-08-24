@@ -8,7 +8,7 @@
       content="width=device-width,
                initial-scale=1,
                viewport-fit=cover">
-    <link rel="stylesheet" href="./style.css?v=20260824-writing-game">
+    <link rel="stylesheet" href="./style.css?v=20260825-writing-test-v2">
 </head>
 <body>
 
@@ -41,7 +41,27 @@
                     <button class="study-card kanji-card" onclick="ChuyenTab('man-kanji')"><span>漢</span><div><small>TỪ VỰNG & VIẾT</small><h3>Kanji</h3><p>Flashcard, phát âm và luyện viết tay.</p></div><b>→</b></button>
                     <button class="study-card grammar-card" onclick="ChuyenTab('man-grammar-levels')"><span>文</span><div><small>MẪU CÂU</small><h3>Ngữ pháp</h3><p>Cấu trúc, ví dụ và furigana trực quan.</p></div><b>→</b></button>
                     <button class="study-card reading-card" onclick="MoCapDoDocHieu()"><span>読</span><div><small>LUYỆN ĐỌC</small><h3>Đọc hiểu</h3><p>Bài đọc ngắn, câu hỏi và giải thích.</p></div><b>→</b></button>
+                    <button class="study-card writing-test-card" onclick="MoManThiViet()"><span>書</span><div><small>CHẤM ĐIỂM NÉT</small><h3>Thi viết Kanji</h3><p>Viết từ trí nhớ, nhận điểm 0–100.</p></div><b>→</b></button>
                 </div>
+            </section>
+
+            <section id="man-writing-test-levels" class="man-hinh">
+                <div class="section-heading"><span class="eyebrow">書き取りテスト</span><h2>Thử thách viết Kanji</h2><p>Nhìn âm Hán Việt, tự viết chữ rồi để hệ thống chấm số nét, thứ tự và hình dáng.</p></div>
+                <article class="writing-test-setup">
+                    <div class="writing-test-level"><span>N5</span><div><small>JLPT N5</small><b>Kanji nền tảng</b><em id="writing-best-score">Kỷ lục: --</em></div></div>
+                    <div class="writing-count-picker"><span>Số câu</span><div><button onclick="ChonSoCauThiViet(5, this)">5</button><button class="active" onclick="ChonSoCauThiViet(10, this)">10</button><button onclick="ChonSoCauThiViet(20, this)">20</button></div></div>
+                    <button class="start-writing-test" onclick="BatDauBaiTestViet('n5')">BẮT ĐẦU THỬ THÁCH →</button>
+                </article>
+                <p class="writing-test-note">Điểm máy là phản hồi luyện tập, không thay thế đánh giá thư pháp của giáo viên.</p>
+            </section>
+
+            <section id="man-writing-results" class="man-hinh">
+                <article class="writing-result-card">
+                    <span class="result-kicker">HOÀN THÀNH</span><div class="result-score"><strong id="writing-final-score">0</strong><small>/100</small></div>
+                    <h2 id="writing-result-title">Khởi đầu tốt!</h2><p id="writing-result-summary">Bạn đã hoàn thành bài thi viết.</p>
+                    <div class="writing-result-stats"><div><b id="writing-correct-count">0/10</b><span>Chữ đạt</span></div><div><b id="writing-xp-earned">+0 XP</b><span>Phần thưởng</span></div></div>
+                    <button onclick="BatDauBaiTestViet('n5')">Thi lại</button><button class="secondary" onclick="MoManThiViet()">Chọn số câu</button>
+                </article>
             </section>
 
             <section id="man-reading-levels" class="man-hinh">
@@ -79,12 +99,6 @@
                 </div>
                 <div class="welcome" style="margin-top: 15px;">Mỗi ngày cày 10 từ cốt lõi. Chọn ngày học của bạn:</div>
 
-                <button id="btn-thu-thach-viet" class="writing-challenge-entry" type="button" onclick="BatDauThuThachViet('n5')">
-                    <span>🎮</span>
-                    <div><b>THỬ THÁCH VIẾT N5</b><small>Nhìn âm Hán Việt • tự viết Kanji • nhận XP</small></div>
-                    <i>CHƠI →</i>
-                </button>
-                
                 <div id="vung-chua-nut-ngay" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; max-height: 400px; overflow-y: auto; margin: 20px auto; padding: 10px; border: 1px solid rgba(0,255,204,0.1); border-radius: 8px; background: rgba(0,0,0,0.2);">
                     </div>
             </section>
@@ -222,7 +236,7 @@
                 </div>
 
                 <div id="writing-challenge-panel" class="writing-challenge-panel" hidden>
-                    <div class="challenge-label">🎮 CÂU HỎI N5</div>
+                    <div class="challenge-label">🎮 <span id="challenge-progress">CÂU 1 / 10</span></div>
                     <p>Hãy viết chữ Kanji có âm Hán Việt:</p>
                     <strong id="challenge-han-viet">NHẤT</strong>
                     <span id="challenge-meaning">Nghĩa: Một</span>
@@ -320,6 +334,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260824-writing-game"></script>
+    <script src="./script.js?v=20260825-writing-test-v2"></script>
 </body>
 </html>
