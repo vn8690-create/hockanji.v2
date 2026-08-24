@@ -768,7 +768,7 @@ function KetThucNet(event) {
 function VeDoanNet(a, b) {
     if (!writingCtx) return;
     const boardWidth = writingCanvas.getBoundingClientRect().width;
-    writingCtx.strokeStyle = '#f8fafc';
+    writingCtx.strokeStyle = '#111827';
     writingCtx.lineWidth = Math.max(7, boardWidth * 0.025);
     writingCtx.beginPath();
     writingCtx.moveTo(a.x, a.y);
