@@ -1374,3 +1374,40 @@ transition:
 .reading-questions { display:grid; gap:13px; margin-top:8px; }.reading-question { padding:16px; background:#101827; border:1px solid rgba(148,163,184,.14); border-radius:15px; }.reading-question p { display:flex; gap:9px; margin-bottom:12px; line-height:1.55; }.reading-question p span { display:grid; place-items:center; flex:0 0 24px; height:24px; color:#001410; background:#00ffcc; border-radius:50%; font-size:.7rem; font-weight:900; }.reading-question>div { display:grid; gap:8px; }.reading-question button { padding:11px 12px; color:#cbd5e1; text-align:left; background:#151f32; border:1px solid rgba(148,163,184,.16); border-radius:10px; cursor:pointer; }.reading-question button.correct { color:#00140e; background:#34d399; border-color:#34d399; }.reading-question button.wrong { color:#fff; background:#e11d48; border-color:#e11d48; }.reading-question aside { margin-top:11px; padding:11px; color:#bfdbfe; background:rgba(56,189,248,.08); border-radius:9px; font-size:.73rem; line-height:1.55; }
 @media (min-width:760px){.study-grid{grid-template-columns:repeat(3,1fr)}.study-card{grid-template-columns:1fr;align-content:start}.study-card>b{display:none}.reading-level-list{grid-template-columns:1fr 1fr}.passage-card{padding:30px}.japanese-passage{font-size:1.18rem}}
 @media (max-width:360px){.reading-level-card em{display:none}.reading-level-card{grid-template-columns:48px 1fr}.app-navigation .nav-text{font-size:.59rem}}
+
+/* Từng từ ghép nằm trên một dòng: 日本語  ÂM HÁN VIỆT - NGHĨA */
+.compound-list {
+    display: grid;
+    gap: 8px;
+}
+
+.compound-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 5px 9px;
+    padding: 9px 11px;
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, .035);
+    border-left: 2px solid rgba(0, 255, 204, .65);
+    border-radius: 5px;
+    font-size: .88rem;
+    line-height: 1.45;
+}
+
+.compound-item .compound-kanji {
+    color: #fff;
+    font-size: 1.08rem;
+}
+
+.compound-item strong {
+    color: #f0abfc;
+    font-size: .78rem;
+    letter-spacing: .03em;
+}
+
+.compound-item span {
+    color: #94a3b8;
+    font-size: .78rem;
+    font-weight: 700;
+}

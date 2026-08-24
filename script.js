@@ -54,6 +54,44 @@ let mảngDữLiệuGốcĐãTải = [];  // Lưu tạm dữ liệu sau khi fetc
 // Kho từ nhiễu dự phòng chuẩn Nhật ngữ phòng khi file gốc quá ngắn
 const KHO_NHIEU_DU_PHONG = ["上手", "下手", "元気", "安全", "水分", "時間", "先生", "学生", "会社"];
 
+// Một số chữ thường xuất hiện chéo cấp độ. Phần còn lại được lấy tự động
+// từ chính dữ liệu Kanji đang học nên không cần tải thêm tệp nặng.
+const HAN_VIET_BO_SUNG = {
+    地: 'ĐỊA', 鉄: 'THIẾT', 電: 'ĐIỆN', 車: 'XA', 学: 'HỌC', 校: 'HIỆU',
+    生: 'SINH', 先: 'TIÊN', 会: 'HỘI', 社: 'XÃ', 時: 'THỜI', 間: 'GIAN',
+    曜: 'DIỆU', 日: 'NHẬT', 月: 'NGUYỆT', 年: 'NIÊN', 国: 'QUỐC',
+    語: 'NGỮ', 人: 'NHÂN', 大: 'ĐẠI', 小: 'TIỂU', 中: 'TRUNG'
+};
+
+function LayAmHanVietTuNghia(nghia = '') {
+    const phanDau = nghia.split('(')[0].trim();
+    const trongNgoac = nghia.match(/\(([^)]+)\)/)?.[1]?.trim() || '';
+    const amHan = phanDau && phanDau === phanDau.toUpperCase() ? trongNgoac : phanDau;
+    return amHan.split(/[,;\/]/)[0].trim().toUpperCase();
+}
+
+function TaoBangAmHanViet() {
+    const bang = { ...HAN_VIET_BO_SUNG };
+    const nguon = [...mảngDữLiệuGốcĐãTải, ...duLieuHienTai];
+    nguon.forEach(item => {
+        const chu = item.kanji || item.chu;
+        if (chu?.length === 1) bang[chu] = (item.han_viet || LayAmHanVietTuNghia(item.meaning || item.nghia)).toUpperCase();
+    });
+    return bang;
+}
+
+function DinhDangTuGhep(viDu = '') {
+    const bangAmHan = TaoBangAmHanViet();
+    return viDu.split(/[,，、]/).map(muc => {
+        const khop = muc.trim().match(/^([^\s(（]+)\s*[（(]?([^）)]*)[）)]?$/);
+        if (!khop) return '';
+        const tuNhat = khop[1];
+        const nghia = khop[2] || '';
+        const amHan = [...tuNhat].map(chu => bangAmHan[chu] || '').filter(Boolean).join(' ');
+        return `<div class="compound-item"><b class="compound-kanji">${tuNhat}</b>${amHan ? `<strong>${amHan}</strong>` : ''}${nghia ? `<span>- ${nghia.toUpperCase()}</span>` : ''}</div>`;
+    }).filter(Boolean).join('');
+}
+
 // =========================================================================
 // ĐIỀU HƯỚNG MENU TAB
 // =========================================================================
@@ -373,7 +411,7 @@ function ChayDongThoiGianFlashcard() {
                     </div>
                     <div id="step-tu-ghep" class="khoi-tu-ghep" style="${styleAnYomi} border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; opacity:0; transition: opacity 0.4s;">
                         <div class="title-ghep" style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;">Từ Ghép Tạo Nghĩa:</div>
-                        <div class="content-ghep" style="font-size: 1.05rem; color: #fff;">${viDu}</div>
+                        <div class="content-ghep compound-list">${DinhDangTuGhep(viDu)}</div>
                     </div>
                     <button class="open-writing-button" type="button" onclick="MoLuyenViet('${chuKanji.replace(/'/g, "\\'")}')">
                         <span>✍️</span>
