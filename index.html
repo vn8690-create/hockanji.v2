@@ -173,6 +173,67 @@
 
 </section>
 
+            <section id="man-luyen-viet" class="man-hinh handwriting-screen" aria-label="Luyện viết Kanji">
+                <div class="writing-topbar">
+                    <button class="writing-back" type="button" onclick="DongLuyenViet()">‹ Trở lại</button>
+                    <div>
+                        <small>KANJI WRITING</small>
+                        <h2>LUYỆN VIẾT CHỮ <span id="writing-title-kanji">字</span></h2>
+                    </div>
+                    <div class="writing-streak">✍️ <span id="writing-xp-preview">+10 XP</span></div>
+                </div>
+
+                <div class="writing-layout">
+                    <article class="stroke-order-card">
+                        <div class="writing-section-head">
+                            <div>
+                                <small>書き順・KAKIJUN</small>
+                                <h3>Thứ tự nét</h3>
+                            </div>
+                            <a id="stroke-source-link" href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener noreferrer" aria-label="Mở nguồn KanjiVG">Nguồn ↗</a>
+                        </div>
+                        <div id="stroke-order-viewer" class="stroke-order-viewer" aria-live="polite">
+                            <div class="stroke-loading">Đang tải thứ tự nét…</div>
+                        </div>
+                        <div class="stroke-controls">
+                            <button type="button" onclick="PhatLaiThuTuNet()">▶ Xem lại</button>
+                            <button type="button" onclick="HienNetTiepTheo()">Nét tiếp theo →</button>
+                        </div>
+                        <p id="stroke-status" class="stroke-status">Chạm “Xem lại” để xem cách viết.</p>
+                    </article>
+
+                    <article class="practice-card">
+                        <div class="writing-section-head">
+                            <div>
+                                <small>なぞり書き・TRACE</small>
+                                <h3>Viết theo chữ mẫu</h3>
+                            </div>
+                            <button id="btn-toggle-guide" class="mini-toggle active" type="button" onclick="BatTatChuMau()">👁 Chữ mẫu</button>
+                        </div>
+
+                        <div id="writing-board" class="writing-board">
+                            <div class="practice-grid" aria-hidden="true"></div>
+                            <div id="kanji-watermark" class="kanji-watermark" aria-hidden="true">字</div>
+                            <canvas id="handwriting-canvas" aria-label="Vùng viết chữ Kanji bằng tay"></canvas>
+                        </div>
+
+                        <div class="opacity-control">
+                            <label for="guide-opacity">Độ mờ chữ mẫu</label>
+                            <input id="guide-opacity" type="range" min="0" max="30" value="16" oninput="DoiDoMoChuMau(this.value)">
+                            <output id="guide-opacity-value">16%</output>
+                        </div>
+
+                        <div class="writing-tools">
+                            <button type="button" onclick="HoanTacNet()">↶ Hoàn tác</button>
+                            <button type="button" onclick="XoaBangViet()">⌫ Xóa hết</button>
+                            <button class="complete-writing" type="button" onclick="HoanThanhLuyenViet()">✓ Hoàn thành</button>
+                        </div>
+                    </article>
+                </div>
+
+                <p class="writing-tip">Mẹo: xem thứ tự nét trước, tô theo chữ mờ một lần rồi ẩn chữ mẫu để tự viết.</p>
+            </section>
+
             <section id="man-lam-bai-test" class="man-hinh">
                 <div class="thanh-dieu-huong">
                     <div id="test-tien-do" style="color: #38bdf8; font-weight: bold;">Câu hỏi: 1 / 10</div>

@@ -22,6 +22,17 @@ let indexTestHienTai = 0;
 let daBamDapAn = false;
 let tenFileHienTai = ''; 
 
+// Trạng thái khu luyện viết Kanji
+let kanjiDangLuyen = '';
+let manHinhTruocLuyenViet = 'man-hoc-chi-tiet';
+let cacNetDaViet = [];
+let netDangViet = null;
+let writingCanvas = null;
+let writingCtx = null;
+let strokePaths = [];
+let strokeStep = 0;
+let strokeAnimationTimer = null;
+
 // --- BIẾN PHỤC VỤ CHIA NGÀY HỌC DÙNG CHUNG ---
 const WORDS_PER_DAY = 10;       // Mỗi ngày học 10 từ
 let dangHocTheoNgay = false;   // Trạng thái kiểm tra có đang học theo ngày không
@@ -38,6 +49,7 @@ function ClearAllTimers() {
     clearTimeout(boDemStep2);
     clearTimeout(boDemStep34);
     clearTimeout(boDemTuDongChuyen);
+    clearTimeout(strokeAnimationTimer);
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
@@ -348,6 +360,11 @@ function ChayDongThoiGianFlashcard() {
                         <div class="title-ghep" style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 5px;">Từ Ghép Tạo Nghĩa:</div>
                         <div class="content-ghep" style="font-size: 1.05rem; color: #fff;">${viDu}</div>
                     </div>
+                    <button class="open-writing-button" type="button" onclick="MoLuyenViet('${chuKanji.replace(/'/g, "\\'")}')">
+                        <span>✍️</span>
+                        <div><b>LUYỆN VIẾT TAY</b><small>Xem 書き順 và viết theo chữ mẫu</small></div>
+                        <i>→</i>
+                    </button>
                 </div>
             `;
         }
@@ -572,6 +589,267 @@ function ResetToanBoTienDoFile() {
         ChayDongThoiGianFlashcard();
     }
 }
+
+// =========================================================================
+// LUYỆN VIẾT KANJI: THỨ TỰ NÉT + CANVAS CHO CHUỘT/CẢM ỨNG/BÚT
+// =========================================================================
+function MoLuyenViet(chuKanji) {
+    if (!chuKanji) return;
+    ClearAllTimers();
+    manHinhTruocLuyenViet = document.querySelector('.man-hinh.active')?.id || 'man-hoc-chi-tiet';
+    kanjiDangLuyen = Array.from(chuKanji)[0];
+
+    document.getElementById('writing-title-kanji').textContent = kanjiDangLuyen;
+    document.getElementById('kanji-watermark').textContent = kanjiDangLuyen;
+    document.getElementById('writing-xp-preview').textContent =
+        localStorage.getItem(`writing_done_${kanjiDangLuyen}`) ? 'Đã luyện' : '+10 XP';
+
+    ChuyenTab('man-luyen-viet');
+    requestAnimationFrame(() => {
+        KhoiTaoBangViet();
+        TaiThuTuNet(kanjiDangLuyen);
+    });
+}
+
+function DongLuyenViet() {
+    ClearAllTimers();
+    ChuyenTab(manHinhTruocLuyenViet || 'man-hoc-chi-tiet');
+}
+
+function LayTenFileKanjiVG(chuKanji) {
+    return chuKanji.codePointAt(0).toString(16).padStart(5, '0');
+}
+
+async function TaiThuTuNet(chuKanji) {
+    const viewer = document.getElementById('stroke-order-viewer');
+    const status = document.getElementById('stroke-status');
+    if (!viewer) return;
+    viewer.innerHTML = '<div class="stroke-loading">Đang tải thứ tự nét…</div>';
+    strokePaths = [];
+    strokeStep = 0;
+
+    try {
+        const tenFile = LayTenFileKanjiVG(chuKanji);
+        const url = `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${tenFile}.svg`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Không có dữ liệu thứ tự nét');
+        const svgText = await response.text();
+        const parsed = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+        const sourceSvg = parsed.querySelector('svg');
+        if (!sourceSvg) throw new Error('SVG không hợp lệ');
+
+        sourceSvg.querySelectorAll('script,foreignObject,style').forEach(node => node.remove());
+        const svg = document.importNode(sourceSvg, true);
+        svg.removeAttribute('width');
+        svg.removeAttribute('height');
+        svg.setAttribute('viewBox', '0 0 109 109');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', `Thứ tự nét chữ ${chuKanji}`);
+        svg.classList.add('kanjivg-svg');
+
+        viewer.replaceChildren(svg);
+        strokePaths = Array.from(svg.querySelectorAll('path'));
+        strokePaths.forEach((path, index) => {
+            path.classList.add('kanji-stroke');
+            path.dataset.strokeIndex = String(index);
+        });
+        if (status) status.textContent = `${strokePaths.length} nét • dữ liệu KanjiVG`;
+        requestAnimationFrame(PhatLaiThuTuNet);
+    } catch (error) {
+        viewer.innerHTML = `<div class="stroke-fallback"><b>${chuKanji}</b><span>Chưa tải được hình thứ tự nét.</span></div>`;
+        if (status) status.textContent = 'Hãy kiểm tra kết nối mạng và thử lại.';
+    }
+}
+
+function PhatLaiThuTuNet() {
+    clearTimeout(strokeAnimationTimer);
+    if (!strokePaths.length) return;
+    strokeStep = 0;
+    strokePaths.forEach(path => {
+        const length = Math.max(path.getTotalLength?.() || 100, 1);
+        path.style.transition = 'none';
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+        path.style.opacity = '0.2';
+    });
+    requestAnimationFrame(() => ChayNetKeTiepTuDong());
+}
+
+function ChayNetKeTiepTuDong() {
+    if (strokeStep >= strokePaths.length) return;
+    const path = strokePaths[strokeStep];
+    path.style.transition = 'stroke-dashoffset .52s ease, opacity .2s ease';
+    path.style.strokeDashoffset = '0';
+    path.style.opacity = '1';
+    strokeStep++;
+    document.getElementById('stroke-status').textContent = `Đang viết nét ${strokeStep} / ${strokePaths.length}`;
+    strokeAnimationTimer = setTimeout(ChayNetKeTiepTuDong, 620);
+}
+
+function HienNetTiepTheo() {
+    clearTimeout(strokeAnimationTimer);
+    if (!strokePaths.length) return;
+    if (strokeStep >= strokePaths.length) {
+        PhatLaiThuTuNet();
+        clearTimeout(strokeAnimationTimer);
+        return;
+    }
+    const path = strokePaths[strokeStep];
+    path.style.transition = 'stroke-dashoffset .42s ease, opacity .2s ease';
+    path.style.strokeDashoffset = '0';
+    path.style.opacity = '1';
+    strokeStep++;
+    document.getElementById('stroke-status').textContent = `Nét ${strokeStep} / ${strokePaths.length}`;
+}
+
+function KhoiTaoBangViet() {
+    writingCanvas = document.getElementById('handwriting-canvas');
+    if (!writingCanvas) return;
+    writingCtx = writingCanvas.getContext('2d', { alpha: true });
+    DoiKichThuocBangViet();
+    cacNetDaViet = [];
+    netDangViet = null;
+
+    writingCanvas.onpointerdown = BatDauViet;
+    writingCanvas.onpointermove = DangViet;
+    writingCanvas.onpointerup = KetThucNet;
+    writingCanvas.onpointercancel = KetThucNet;
+    writingCanvas.onpointerleave = event => {
+        if (event.pointerType === 'mouse' && netDangViet) KetThucNet(event);
+    };
+}
+
+function DoiKichThuocBangViet() {
+    if (!writingCanvas || !writingCtx) return;
+    const rect = writingCanvas.getBoundingClientRect();
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const oldStrokes = cacNetDaViet;
+    writingCanvas.width = Math.round(rect.width * ratio);
+    writingCanvas.height = Math.round(rect.height * ratio);
+    writingCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    writingCtx.lineCap = 'round';
+    writingCtx.lineJoin = 'round';
+    cacNetDaViet = oldStrokes;
+    VeLaiTatCaNet();
+}
+
+function ToaDoTrongCanvas(event) {
+    const rect = writingCanvas.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+function BatDauViet(event) {
+    event.preventDefault();
+    writingCanvas.setPointerCapture?.(event.pointerId);
+    netDangViet = [ToaDoTrongCanvas(event)];
+    cacNetDaViet.push(netDangViet);
+}
+
+function DangViet(event) {
+    if (!netDangViet) return;
+    event.preventDefault();
+    const diem = ToaDoTrongCanvas(event);
+    const truoc = netDangViet[netDangViet.length - 1];
+    if (Math.hypot(diem.x - truoc.x, diem.y - truoc.y) < 1.5) return;
+    netDangViet.push(diem);
+    VeDoanNet(truoc, diem);
+}
+
+function KetThucNet(event) {
+    if (!netDangViet) return;
+    event?.preventDefault();
+    if (netDangViet.length === 1) {
+        const p = netDangViet[0];
+        VeDoanNet(p, { x: p.x + 0.1, y: p.y + 0.1 });
+    }
+    netDangViet = null;
+}
+
+function VeDoanNet(a, b) {
+    if (!writingCtx) return;
+    const boardWidth = writingCanvas.getBoundingClientRect().width;
+    writingCtx.strokeStyle = '#f8fafc';
+    writingCtx.lineWidth = Math.max(7, boardWidth * 0.025);
+    writingCtx.beginPath();
+    writingCtx.moveTo(a.x, a.y);
+    writingCtx.lineTo(b.x, b.y);
+    writingCtx.stroke();
+}
+
+function VeLaiTatCaNet() {
+    if (!writingCtx || !writingCanvas) return;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    writingCtx.clearRect(0, 0, writingCanvas.width / ratio, writingCanvas.height / ratio);
+    cacNetDaViet.forEach(net => {
+        if (net.length === 1) VeDoanNet(net[0], { x: net[0].x + 0.1, y: net[0].y + 0.1 });
+        for (let i = 1; i < net.length; i++) VeDoanNet(net[i - 1], net[i]);
+    });
+}
+
+function HoanTacNet() {
+    cacNetDaViet.pop();
+    netDangViet = null;
+    VeLaiTatCaNet();
+}
+
+function XoaBangViet() {
+    cacNetDaViet = [];
+    netDangViet = null;
+    VeLaiTatCaNet();
+}
+
+function BatTatChuMau() {
+    const watermark = document.getElementById('kanji-watermark');
+    const button = document.getElementById('btn-toggle-guide');
+    const hien = watermark.style.visibility !== 'hidden';
+    watermark.style.visibility = hien ? 'hidden' : 'visible';
+    button.classList.toggle('active', !hien);
+    button.innerHTML = hien ? '◯ Chữ mẫu' : '👁 Chữ mẫu';
+}
+
+function DoiDoMoChuMau(value) {
+    const opacity = Number(value) / 100;
+    document.getElementById('kanji-watermark').style.opacity = String(opacity);
+    document.getElementById('guide-opacity-value').textContent = `${value}%`;
+    if (Number(value) > 0) {
+        document.getElementById('kanji-watermark').style.visibility = 'visible';
+        document.getElementById('btn-toggle-guide').classList.add('active');
+    }
+}
+
+function HoanThanhLuyenViet() {
+    if (cacNetDaViet.length === 0) {
+        const status = document.getElementById('stroke-status');
+        status.textContent = 'Bro hãy viết ít nhất một nét trước nhé ✍️';
+        status.classList.add('writing-warning');
+        setTimeout(() => status.classList.remove('writing-warning'), 1300);
+        return;
+    }
+    const key = `writing_done_${kanjiDangLuyen}`;
+    const daNhanXP = localStorage.getItem(key);
+    if (!daNhanXP) {
+        diemXP += 10;
+        localStorage.setItem('kanji_pure_xp', diemXP);
+        localStorage.setItem(key, '1');
+        const xpElement = document.getElementById('id-xp');
+        if (xpElement) xpElement.textContent = diemXP;
+    }
+    document.getElementById('writing-xp-preview').textContent = '✓ Đã luyện';
+    const completeButton = document.querySelector('.complete-writing');
+    completeButton.textContent = daNhanXP ? '✓ Đã hoàn thành' : '🎉 +10 XP';
+    completeButton.classList.add('success');
+    setTimeout(() => {
+        completeButton.textContent = '✓ Hoàn thành';
+        completeButton.classList.remove('success');
+    }, 1600);
+}
+
+window.addEventListener('resize', () => {
+    if (document.getElementById('man-luyen-viet')?.classList.contains('active')) {
+        clearTimeout(window.__writingResizeTimer);
+        window.__writingResizeTimer = setTimeout(DoiKichThuocBangViet, 120);
+    }
+});
 
 // =========================================================================
 // KHU VỰC ĐẤU TRƯỜNG TEST TRẮC NGHIỆM 4 ĐÁP ÁN
