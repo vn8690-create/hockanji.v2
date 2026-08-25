@@ -901,9 +901,13 @@ function KhoiTaoBangViet() {
     writingCanvas = document.getElementById('handwriting-canvas');
     if (!writingCanvas) return;
     writingCtx = writingCanvas.getContext('2d', { alpha: true });
-    DoiKichThuocBangViet();
+    // Xóa dữ liệu nét trước khi đổi kích thước canvas. Nếu làm ngược lại,
+    // DoiKichThuocBangViet sẽ vẽ lại các nét của câu trước lên bảng mới.
     cacNetDaViet = [];
     netDangViet = null;
+    DoiKichThuocBangViet();
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    writingCtx.clearRect(0, 0, writingCanvas.width / ratio, writingCanvas.height / ratio);
 
     writingCanvas.onpointerdown = BatDauViet;
     writingCanvas.onpointermove = DangViet;
