@@ -1207,8 +1207,8 @@ function KichHoatLamDe(theLoai) {
     
     if (theLoai === 'ngu-phap') {
         fileNguon = `${fileNguon}_grammar`;
-    } else if (theLoai === 'kanji' && fileNguon === 'n5') {
-        fileNguon = 'n5_quiz'; 
+    } else if (theLoai === 'kanji' && ['n5', 'n4'].includes(fileNguon)) {
+        fileNguon = `${fileNguon}_quiz`;
     }
     
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
@@ -1224,6 +1224,30 @@ function KichHoatLamDe(theLoai) {
         });
 }
 
+function TaoLuaChonKana(dapAnDung) {
+    const doiAm = {か:'が',き:'ぎ',く:'ぐ',け:'げ',こ:'ご',さ:'ざ',し:'じ',す:'ず',せ:'ぜ',そ:'ぞ',た:'だ',ち:'ぢ',つ:'づ',て:'で',と:'ど',は:'ば',ひ:'び',ふ:'ぶ',へ:'べ',ほ:'ぼ',が:'か',ぎ:'き',ぐ:'く',げ:'け',ご:'こ',ざ:'さ',じ:'し',ず:'す',ぜ:'せ',ぞ:'そ',だ:'た',で:'て',ど:'と',ば:'は',び:'ひ',ぶ:'ふ',べ:'へ',ぼ:'ほ'};
+    const kyTu = [...dapAnDung];
+    const bienThe = [];
+    kyTu.forEach((chu, index) => {
+        if (doiAm[chu]) {
+            const banSao = [...kyTu];
+            banSao[index] = doiAm[chu];
+            bienThe.push(banSao.join(''));
+        }
+    });
+    if (kyTu.length > 2) {
+        const doiCho = [...kyTu];
+        [doiCho[0], doiCho[1]] = [doiCho[1], doiCho[0]];
+        bienThe.push(doiCho.join(''));
+        bienThe.push(kyTu.slice(0, -1).join(''));
+    }
+    if (dapAnDung.includes('う')) bienThe.push(dapAnDung.replace('う', ''));
+    else bienThe.push(`${dapAnDung}う`);
+    const duPhong = ['しょうじ', 'こうせい', 'じゅうかん', 'けんどう', 'りょうしゅう'];
+    const nhieu = [...new Set([...bienThe, ...duPhong])].filter(x => x && x !== dapAnDung).slice(0, 3);
+    return [dapAnDung, ...nhieu].sort(() => Math.random() - .5);
+}
+
 function TaoDeTracNghiem(khoGoc) {
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
     if (!khoGoc || khoGoc.length < 4) {
@@ -1233,7 +1257,7 @@ function TaoDeTracNghiem(khoGoc) {
     
     mangCauHoiTest = [];
 
-    if (khoGoc[0] && khoGoc[0].options !== undefined) {
+    if (khoGoc[0] && khoGoc[0].correct !== undefined) {
         let danhSachN5Tron = [...khoGoc].sort(() => 0.5 - Math.random());
         let soCauN5 = Math.min(20, danhSachN5Tron.length); 
 
@@ -1242,7 +1266,7 @@ function TaoDeTracNghiem(khoGoc) {
             mangCauHoiTest.push({
                 cauHoiText: `Cách đọc Hiragana chính xác của chữ Kanji này là gì: <br><span style="font-size:3.5rem; font-weight:bold; color:#fff; text-shadow: 0 0 10px #ff00ff;">${itemN5.kanji}</span>`,
                 dung: itemN5.correct,
-                luaChon: [...itemN5.options].sort(() => 0.5 - Math.random())
+                luaChon: (itemN5.options?.length === 4 ? [...itemN5.options] : TaoLuaChonKana(itemN5.correct)).sort(() => 0.5 - Math.random())
             });
         }
     } 
