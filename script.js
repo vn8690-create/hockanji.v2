@@ -1538,9 +1538,9 @@ async function BatDauThiThu(level = 'n5') {
     document.getElementById('test-cau-hoi-text').textContent = `Đang tạo đề thi thử ${level.toUpperCase()}…`;
     try {
         if (level === 'n5') {
-            const response = await fetch('./n5_mock_july_style.json?v=1');
-            if (!response.ok) throw new Error('data');
-            const nganHang = await response.json();
+            const [response, extraResponse] = await Promise.all([fetch('./n5_mock_july_style.json?v=2'), fetch('./n5_mock_bank_extra.json?v=1')]);
+            if (!response.ok || !extraResponse.ok) throw new Error('data');
+            const nganHang = [...await response.json(), ...await extraResponse.json()];
             const deThi = TaoDeN5TheoDinhMuc(nganHang);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n5-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
@@ -1580,7 +1580,7 @@ function TaoDeN5TheoDinhMuc(nganHang) {
         const uuTienMoi = [...pool].sort((a,b) => Number(tapGanDay.has(a.id)) - Number(tapGanDay.has(b.id)) || Math.random() - .5);
         deThi.push(...uuTienMoi.slice(0, soCau).map(TronLuaChonVaGiuDapAn));
     });
-    localStorage.setItem('n5_recent_exam_ids', JSON.stringify(deThi.map(cau => cau.id).slice(-86)));
+    localStorage.setItem('n5_recent_exam_ids', JSON.stringify([...daGapGanDay, ...deThi.map(cau => cau.id)].slice(-86)));
     localStorage.setItem('n5_last_exam_code', `N5-${Date.now().toString(36).slice(-6).toUpperCase()}`);
     return deThi;
 }
