@@ -27,6 +27,7 @@ let thoiGianTestConLai = 0;
 let testDaHetGio = false;
 let soCauDungTest = 0;
 let cheDoOnCauSai = false;
+let cheDoThiThuChuan = false;
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -1262,6 +1263,7 @@ function TaoDeTracNghiem(khoGoc) {
     mangCauHoiTest = [];
     soCauDungTest = 0;
     cheDoOnCauSai = false;
+    cheDoThiThuChuan = false;
 
     if (khoGoc[0] && khoGoc[0].correct !== undefined) {
         let danhSachN5Tron = [...khoGoc].sort(() => 0.5 - Math.random());
@@ -1345,9 +1347,9 @@ function DinhDangThoiGian(soGiay) {
     return `${String(phut).padStart(2, '0')}:${String(giay).padStart(2, '0')}`;
 }
 
-function BatDauDuongDuaTest(soCau) {
+function BatDauDuongDuaTest(soCau, soGiayCoDinh = null) {
     clearInterval(boDemDuongDuaTest);
-    tongThoiGianTest = Math.max(180, soCau * 30);
+    tongThoiGianTest = soGiayCoDinh || Math.max(180, soCau * 30);
     thoiGianTestConLai = tongThoiGianTest;
     testDaHetGio = false;
     const race = document.getElementById('test-race');
@@ -1417,8 +1419,8 @@ function HienThiCauHoiTest() {
     const testTienDo = document.getElementById('test-tien-do');
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
     
-    if (testTienDo) testTienDo.innerText = `Câu hỏi: ${indexTestHienTai + 1} / ${mangCauHoiTest.length}`;
-    if (cauHoiTxt) cauHoiTxt.innerHTML = phanTuCau.cauHoiText;
+    if (testTienDo) testTienDo.innerHTML = `${phanTuCau.section ? `<small class="exam-section-name">${phanTuCau.section}</small>` : ''}Câu hỏi: ${indexTestHienTai + 1} / ${mangCauHoiTest.length}`;
+    if (cauHoiTxt) cauHoiTxt.innerHTML = `${phanTuCau.instruction ? `<div class="exam-instruction">${phanTuCau.instruction}</div>` : ''}${phanTuCau.cauHoiText}`;
 
     let khungDapAn = document.getElementById('test-danh-sach-dap-an');
     if (khungDapAn) {
@@ -1439,17 +1441,24 @@ function KiemTraKetQuaTest(nutBam, textChon, textDung) {
 
     let tatCaNut = document.querySelectorAll('.nut-option-test');
     tatCaNut.forEach(nut => {
-        if (nut.innerText === textDung) nut.classList.add('dap-an-dung-style'); 
+        nut.disabled = true;
+        if (!cheDoThiThuChuan && nut.innerText === textDung) nut.classList.add('dap-an-dung-style');
     });
 
+    const cauHienTai = mangCauHoiTest[indexTestHienTai];
+    cauHienTai.wasCorrect = textChon === textDung;
     if (textChon === textDung) {
-        nutBam.classList.add('dap-an-dung-style');
+        nutBam.classList.add(cheDoThiThuChuan ? 'exam-selected-answer' : 'dap-an-dung-style');
         soCauDungTest++;
         CongDiemXP(5); 
         XoaCauKhoiSoSai(mangCauHoiTest[indexTestHienTai]?.key);
     } else {
-        nutBam.classList.add('dap-an-sai-style'); 
+        nutBam.classList.add(cheDoThiThuChuan ? 'exam-selected-answer' : 'dap-an-sai-style');
         LuuCauSai(mangCauHoiTest[indexTestHienTai], textChon);
+    }
+
+    if (cauHienTai.explanation && !cheDoThiThuChuan) {
+        document.getElementById('test-cau-hoi-text')?.insertAdjacentHTML('beforeend', `<div class="test-answer-explanation"><b>Giải thích:</b> ${cauHienTai.explanation}</div>`);
     }
 
     const nutChuyenTest = document.getElementById('vung-nut-chuyen-test');
@@ -1466,7 +1475,10 @@ function CauTestTiepTheo() {
         
         LuuKetQuaTest();
         const tyLe = Math.round(soCauDungTest / mangCauHoiTest.length * 100);
-        if (cauHoiTxt) cauHoiTxt.innerHTML = `🎉 <span style="color:#00ffcc; font-size:1.6rem; font-weight:bold;">HOÀN THÀNH!</span><br><p style="font-size:1rem; margin-top:10px; color:#cbd5e1;">Đúng ${soCauDungTest}/${mangCauHoiTest.length} câu · ${tyLe}%. ${tyLe >= 80 ? 'Bạn đang nắm khá chắc phần này.' : 'Hãy ôn lại các câu sai rồi thử lần nữa nhé.'}</p>`;
+        const nhom = {};
+        mangCauHoiTest.forEach(cau => { const ten=(cau.section||'TỔNG HỢP').split('｜')[0]; nhom[ten] ||= {dung:0,tong:0}; nhom[ten].tong++; if(cau.wasCorrect) nhom[ten].dung++; });
+        const chiTiet = Object.entries(nhom).map(([ten,kq])=>`<span><b>${kq.dung}/${kq.tong}</b><small>${ten}</small></span>`).join('');
+        if (cauHoiTxt) cauHoiTxt.innerHTML = `🎉 <span style="color:#00ffcc; font-size:1.6rem; font-weight:bold;">HOÀN THÀNH!</span><br><p style="font-size:1rem; margin-top:10px; color:#cbd5e1;">Đúng ${soCauDungTest}/${mangCauHoiTest.length} câu · ${tyLe}%. ${tyLe >= 80 ? 'Bạn đang nắm khá chắc phần này.' : 'Hãy ôn lại các câu sai rồi thử lần nữa nhé.'}</p><div class="test-section-results">${chiTiet}</div>`;
         if (khungDapAn) khungDapAn.innerHTML = "";
         if (nutChuyenTest) nutChuyenTest.classList.add('an-giau');
     } else {
@@ -1503,7 +1515,7 @@ function LuuKetQuaTest() {
 function BatDauOnCauSai(level = 'n5') {
     const khoSai = LaySoCauSai(level);
     if (!khoSai.length) return;
-    capDoTestChon = level; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; soCauDungTest = 0;
+    capDoTestChon = level; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; cheDoThiThuChuan = false; soCauDungTest = 0;
     mangCauHoiTest = [...khoSai].sort(() => Math.random() - .5).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
     indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
 }
@@ -1513,6 +1525,16 @@ async function BatDauThiThu(level = 'n5') {
     ChuyenTab('man-lam-bai-test');
     document.getElementById('test-cau-hoi-text').textContent = `Đang tạo đề thi thử ${level.toUpperCase()}…`;
     try {
+        if (level === 'n5') {
+            const response = await fetch('./n5_mock_july_style.json?v=1');
+            if (!response.ok) throw new Error('data');
+            const deThi = await response.json();
+            cheDoThiThuChuan = true;
+            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n5-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
+            indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
+            document.getElementById('race-message').textContent = 'Chế độ thi thật: đáp án và lời giải chỉ xuất hiện trong phần ôn câu sai.';
+            return;
+        }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
         if (!kanjiRes.ok || !grammarRes.ok) throw new Error('data');
         const [kanji, grammar] = await Promise.all([kanjiRes.json(), grammarRes.json()]);
