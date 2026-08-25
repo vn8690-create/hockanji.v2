@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="viewport"
+    <meta name="viewport"
       content="width=device-width,
                initial-scale=1,
                viewport-fit=cover">
-    <link rel="stylesheet" href="./style.css?v=20260825-bike-race-v2">
+    <title>Học tiếng Nhật · JLPT N5–N1</title>
+    <link rel="stylesheet" href="./style.css?v=20260825-n5-roadmap-v1">
 </head>
 <body>
 
@@ -37,12 +38,31 @@
 
             <section id="man-study-hub" class="man-hinh">
                 <div class="section-heading"><span class="eyebrow">LỘ TRÌNH HỌC</span><h2>Hôm nay học gì?</h2><p>Chọn một kỹ năng và tiếp tục đúng nhịp của bạn.</p></div>
+                <button class="n5-path-banner" onclick="MoLoTrinhN5()">
+                    <span class="path-badge">N5</span><span><small>LỘ TRÌNH ĐỀ XUẤT</small><b>Hán Việt → Ngữ pháp → Đọc hiểu</b><em id="n5-path-summary">Bắt đầu hành trình N5</em></span><strong>→</strong>
+                </button>
                 <div class="study-grid">
                     <button class="study-card kanji-card" onclick="ChuyenTab('man-kanji')"><span>漢</span><div><small>TỪ VỰNG & VIẾT</small><h3>Kanji</h3><p>Flashcard, phát âm và luyện viết tay.</p></div><b>→</b></button>
                     <button class="study-card grammar-card" onclick="ChuyenTab('man-grammar-levels')"><span>文</span><div><small>MẪU CÂU</small><h3>Ngữ pháp</h3><p>Cấu trúc, ví dụ và furigana trực quan.</p></div><b>→</b></button>
                     <button class="study-card reading-card" onclick="MoCapDoDocHieu()"><span>読</span><div><small>LUYỆN ĐỌC</small><h3>Đọc hiểu</h3><p>Bài đọc ngắn, câu hỏi và giải thích.</p></div><b>→</b></button>
                     <button class="study-card writing-test-card" onclick="MoManThiViet()"><span>書</span><div><small>CHẤM ĐIỂM NÉT</small><h3>Thi viết Kanji</h3><p>Viết từ trí nhớ, nhận điểm 0–100.</p></div><b>→</b></button>
                 </div>
+            </section>
+
+            <section id="man-n5-path" class="man-hinh">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">JLPT N5 ROADMAP</span><h2>Lộ trình chinh phục N5</h2></div><button class="nut-quay-lai" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
+                <article class="readiness-card">
+                    <div class="readiness-ring" id="n5-readiness-ring"><strong id="n5-readiness-score">0</strong><small>%</small></div>
+                    <div><small>MỨC SẴN SÀNG HIỆN TẠI</small><h3 id="n5-readiness-title">Bắt đầu xây nền</h3><p id="n5-readiness-note">Hoàn thành từng chặng để hệ thống đánh giá chính xác hơn.</p></div>
+                </article>
+                <div class="n5-path-list">
+                    <article class="path-stage"><span>01</span><div><small>GIAI ĐOẠN TẠO ĐÀ</small><h3>Hán Việt & Kanji nền tảng</h3><p>99 chữ N5, từ ghép và luyện viết. Học âm quen thuộc trước để không bị ngợp.</p><div class="stage-progress"><i id="n5-kanji-bar"></i></div><em id="n5-kanji-status">0/10 ngày học</em></div><button onclick="MoChonNgay('n5')">Học ngay</button></article>
+                    <article class="path-stage"><span>02</span><div><small>GIAI ĐOẠN DỰNG KHUNG</small><h3>Ngữ pháp cốt lõi</h3><p>60 mẫu câu N5, ví dụ ngắn và kiểm tra nhận biết ý nghĩa.</p><div class="stage-progress"><i id="n5-grammar-bar"></i></div><em id="n5-grammar-status">Chưa có kết quả</em></div><button onclick="TaiDuLieuHoc('grammar','n5_grammar')">Học ngay</button></article>
+                    <article class="path-stage"><span>03</span><div><small>GIAI ĐOẠN ỨNG DỤNG</small><h3>Đọc hiểu tăng dần</h3><p>Câu ngắn → tin nhắn → thông báo → tìm thông tin, chỉ dùng kiến thức phù hợp N5.</p><div class="stage-progress"><i id="n5-reading-bar"></i></div><em id="n5-reading-status">0 bài hoàn thành</em></div><button onclick="TaiDanhSachBaiDoc('n5')">Luyện đọc</button></article>
+                    <article class="path-stage review-stage"><span>04</span><div><small>VÒNG LẶP GHI NHỚ</small><h3>Sửa câu sai</h3><p>Những câu làm sai được lưu trên máy và đưa trở lại thành bài ôn riêng.</p><em id="n5-mistake-status">Chưa có câu cần ôn</em></div><button id="n5-review-button" onclick="BatDauOnCauSai()">Ôn câu sai</button></article>
+                    <article class="path-stage mock-stage"><span>05</span><div><small>KIỂM TRA TỔNG HỢP・KHÔNG NGHE</small><h3>Thi thử N5</h3><p>40 câu Kanji, từ vựng và ngữ pháp trong 20 phút. Kết quả được đưa vào điểm sẵn sàng.</p><em id="n5-mock-status">Chưa thi thử</em></div><button onclick="BatDauThiThuN5()">Vào thi thử</button></article>
+                </div>
+                <p class="readiness-disclaimer">Điểm sẵn sàng là chỉ báo luyện tập trong app, không phải cam kết kết quả kỳ thi chính thức.</p>
             </section>
 
             <section id="man-writing-test-levels" class="man-hinh">
@@ -132,9 +152,11 @@
                 </div>
                 <div class="welcome" style="margin-top:10px;">Chọn thể loại nội dung bạn muốn quyết chiến:</div>
                 <div class="danh-sach-nut">
-                    <button class="nut-the-loai-test" onclick="KichHoatLamDe('kanji')">🎯 Chữ Kanji</button>
+                    <button class="nut-the-loai-test" onclick="KichHoatLamDe('han-viet')">🧠 Âm Hán Việt</button>
+                    <button class="nut-the-loai-test" onclick="KichHoatLamDe('kanji')">🎯 Cách đọc Kanji</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('tu-vung')">📝 Từ Vựng</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('ngu-phap')">📚 Ngữ Pháp</button>
+                    <button id="n5-mock-test-button" class="nut-the-loai-test" onclick="BatDauThiThuN5()">🏁 Thi thử tổng hợp N5</button>
                 </div>
             </section>
 
@@ -353,6 +375,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260825-n4-test-v3"></script>
+    <script src="./script.js?v=20260825-n5-roadmap-v1"></script>
 </body>
 </html>

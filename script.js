@@ -25,6 +25,8 @@ let boDemDuongDuaTest = null;
 let tongThoiGianTest = 0;
 let thoiGianTestConLai = 0;
 let testDaHetGio = false;
+let soCauDungTest = 0;
+let cheDoOnCauSai = false;
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -124,7 +126,7 @@ function ChuyenTab(idManHinh) {
 
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (idManHinh === 'man-home') document.getElementById('btn-nav-home')?.classList.add('active');
-    if (['man-study-hub', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet', 'man-writing-test-levels', 'man-writing-results'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
+    if (['man-study-hub', 'man-n5-path', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet', 'man-writing-test-levels', 'man-writing-results'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
     if (idManHinh === 'man-test-levels') document.getElementById('btn-nav-test')?.classList.add('active');
     if (['man-reading-levels', 'man-reading-lessons', 'man-reading-detail'].includes(idManHinh)) document.getElementById('btn-nav-reading')?.classList.add('active');
 }
@@ -133,6 +135,8 @@ function ChonCapDoTest(capDo) {
     capDoTestChon = capDo;
     const tieuDeLevel = document.getElementById('tieu-de-level-test');
     if (tieuDeLevel) tieuDeLevel.innerText = `ĐANG CHỌN: TEST ${capDo.toUpperCase()}`;
+    const mockButton = document.getElementById('n5-mock-test-button');
+    if (mockButton) mockButton.hidden = capDo !== 'n5';
     ChuyenTab('man-test-the-loai');
 }
 
@@ -1256,6 +1260,8 @@ function TaoDeTracNghiem(khoGoc) {
     }
     
     mangCauHoiTest = [];
+    soCauDungTest = 0;
+    cheDoOnCauSai = false;
 
     if (khoGoc[0] && khoGoc[0].correct !== undefined) {
         let danhSachN5Tron = [...khoGoc].sort(() => 0.5 - Math.random());
@@ -1266,7 +1272,8 @@ function TaoDeTracNghiem(khoGoc) {
             mangCauHoiTest.push({
                 cauHoiText: `Cách đọc Hiragana chính xác của chữ Kanji này là gì: <br><span style="font-size:3.5rem; font-weight:bold; color:#fff; text-shadow: 0 0 10px #ff00ff;">${itemN5.kanji}</span>`,
                 dung: itemN5.correct,
-                luaChon: (itemN5.options?.length === 4 ? [...itemN5.options] : TaoLuaChonKana(itemN5.correct)).sort(() => 0.5 - Math.random())
+                luaChon: (itemN5.options?.length === 4 ? [...itemN5.options] : TaoLuaChonKana(itemN5.correct)).sort(() => 0.5 - Math.random()),
+                key: `${capDoTestChon}-${theLoaiTestChon}-${itemN5.id || itemN5.kanji}`
             });
         }
     } 
@@ -1283,7 +1290,7 @@ function TaoDeTracNghiem(khoGoc) {
             let nghiaGoc = itemGoc.meaning || itemGoc.nghia || "";
             let grammarGoc = itemGoc.grammar || itemGoc.cau_truc || "";
 
-            if (theLoaiTestChon === 'kanji') {
+            if (theLoaiTestChon === 'kanji' || theLoaiTestChon === 'han-viet') {
                 cauHoi = `Chữ Kanji này có âm Hán Việt là gì: <br><span style="font-size:3.5rem; font-weight:bold; color:#fff;">${chuGoc}</span>`;
                 dapAnDung = (nghiaGoc.includes('(') && nghiaGoc.includes(')')) ? nghiaGoc.split('(')[0].trim() : (itemGoc.han_viet || nghiaGoc);
             } else if (theLoaiTestChon === 'tu-vung') {
@@ -1298,7 +1305,7 @@ function TaoDeTracNghiem(khoGoc) {
             let dapAnNhieu = cacTuKhac.map(x => {
                 let n = x.meaning || x.nghia || "";
                 let h = x.han_viet || n;
-                if (theLoaiTestChon === 'kanji') {
+                if (theLoaiTestChon === 'kanji' || theLoaiTestChon === 'han-viet') {
                     return (n.includes('(') && n.includes(')')) ? n.split('(')[0].trim() : h;
                 } else if (theLoaiTestChon === 'tu-vung') {
                     return (n.includes('(') && n.includes(')')) ? n.substring(n.indexOf('(') + 1, n.indexOf(')')) : n;
@@ -1321,7 +1328,8 @@ function TaoDeTracNghiem(khoGoc) {
             mangCauHoiTest.push({
                 cauHoiText: cauHoi,
                 dung: dapAnDung,
-                luaChon: bo4DapAn
+                luaChon: bo4DapAn,
+                key: `${capDoTestChon}-${theLoaiTestChon}-${itemGoc.id || itemGoc.questionNumber || chuGoc || grammarGoc}`
             });
         }
     }
@@ -1436,9 +1444,12 @@ function KiemTraKetQuaTest(nutBam, textChon, textDung) {
 
     if (textChon === textDung) {
         nutBam.classList.add('dap-an-dung-style');
+        soCauDungTest++;
         CongDiemXP(5); 
+        XoaCauKhoiSoSai(mangCauHoiTest[indexTestHienTai]?.key);
     } else {
         nutBam.classList.add('dap-an-sai-style'); 
+        LuuCauSai(mangCauHoiTest[indexTestHienTai], textChon);
     }
 
     const nutChuyenTest = document.getElementById('vung-nut-chuyen-test');
@@ -1453,12 +1464,108 @@ function CauTestTiepTheo() {
         const khungDapAn = document.getElementById('test-danh-sach-dap-an');
         const nutChuyenTest = document.getElementById('vung-nut-chuyen-test');
         
-        if (cauHoiTxt) cauHoiTxt.innerHTML = `🎉 <span style="color:#00ffcc; font-size:1.6rem; font-weight:bold;">QUÁ ĐỈNH BRO ƠI!</span><br><p style="font-size:1rem; margin-top:10px; color:#cbd5e1;">Đã hoàn thành xuất sắc chiến trường trắc nghiệm cấp độ này!</p>`;
+        LuuKetQuaTest();
+        const tyLe = Math.round(soCauDungTest / mangCauHoiTest.length * 100);
+        if (cauHoiTxt) cauHoiTxt.innerHTML = `🎉 <span style="color:#00ffcc; font-size:1.6rem; font-weight:bold;">HOÀN THÀNH!</span><br><p style="font-size:1rem; margin-top:10px; color:#cbd5e1;">Đúng ${soCauDungTest}/${mangCauHoiTest.length} câu · ${tyLe}%. ${tyLe >= 80 ? 'Bạn đang nắm khá chắc phần này.' : 'Hãy ôn lại các câu sai rồi thử lần nữa nhé.'}</p>`;
         if (khungDapAn) khungDapAn.innerHTML = "";
         if (nutChuyenTest) nutChuyenTest.classList.add('an-giau');
     } else {
         HienThiCauHoiTest();
     }
+}
+
+function LaySoCauSai() {
+    try { return JSON.parse(localStorage.getItem('n5_mistake_bank') || '[]'); } catch { return []; }
+}
+
+function LuuCauSai(cauHoi, daChon) {
+    if (!cauHoi || (capDoTestChon !== 'n5' && cauHoi.skill !== 'reading')) return;
+    const khoSai = LaySoCauSai().filter(item => item.key !== cauHoi.key);
+    khoSai.unshift({ ...cauHoi, daChon, skill: cauHoi.skill || theLoaiTestChon, savedAt: Date.now() });
+    localStorage.setItem('n5_mistake_bank', JSON.stringify(khoSai.slice(0, 120)));
+}
+
+function XoaCauKhoiSoSai(key) {
+    if (!key) return;
+    const khoSai = LaySoCauSai();
+    if (khoSai.some(item => item.key === key)) localStorage.setItem('n5_mistake_bank', JSON.stringify(khoSai.filter(item => item.key !== key)));
+}
+
+function LuuKetQuaTest() {
+    if (capDoTestChon !== 'n5' || cheDoOnCauSai || !mangCauHoiTest.length) return;
+    const thongKe = JSON.parse(localStorage.getItem('n5_test_stats') || '{}');
+    const muc = thongKe[theLoaiTestChon] || { attempts: 0, correct: 0, total: 0 };
+    muc.attempts++; muc.correct += soCauDungTest; muc.total += mangCauHoiTest.length; muc.lastAt = Date.now();
+    thongKe[theLoaiTestChon] = muc;
+    localStorage.setItem('n5_test_stats', JSON.stringify(thongKe));
+}
+
+function BatDauOnCauSai() {
+    const khoSai = LaySoCauSai();
+    if (!khoSai.length) return;
+    capDoTestChon = 'n5'; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; soCauDungTest = 0;
+    mangCauHoiTest = [...khoSai].sort(() => Math.random() - .5).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
+    indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
+}
+
+async function BatDauThiThuN5() {
+    capDoTestChon = 'n5'; theLoaiTestChon = 'thi-thu'; cheDoOnCauSai = false; soCauDungTest = 0;
+    ChuyenTab('man-lam-bai-test');
+    document.getElementById('test-cau-hoi-text').textContent = 'Đang tạo đề thi thử N5…';
+    try {
+        const [kanjiRes, grammarRes] = await Promise.all([fetch('./n5_quiz.json?v=4'), fetch('./n5_grammar.json?v=3')]);
+        if (!kanjiRes.ok || !grammarRes.ok) throw new Error('data');
+        const [kanji, grammar] = await Promise.all([kanjiRes.json(), grammarRes.json()]);
+        const tron = mang => [...mang].sort(() => Math.random() - .5);
+        const deKanji = tron(kanji);
+        const cauKanji = deKanji.slice(0,15).map(item => ({cauHoiText:`Chọn cách đọc đúng:<br><span style="font-size:3rem;font-weight:900">${item.kanji}</span>`,dung:item.correct,luaChon:[...item.options],key:`n5-mock-k-${item.id}`,skill:'kanji'}));
+        const khoNghia = [...new Set(kanji.map(item => item.meaning))];
+        const cauVocab = deKanji.slice(15,30).map(item => ({cauHoiText:`Từ <span style="font-size:2.5rem;font-weight:900;color:#5eead4">${item.kanji}</span> có nghĩa là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(khoNghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`n5-mock-v-${item.id}`,skill:'tu-vung'}));
+        const nghia = grammar.map(x=>x.meaning);
+        const cauGrammar = tron(grammar).slice(0,10).map((item,index) => ({cauHoiText:`Mẫu ngữ pháp <b>${item.grammar}</b> có nghĩa phù hợp nhất là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(nghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`n5-mock-g-${index}-${item.grammar}`,skill:'ngu-phap'}));
+        mangCauHoiTest = tron([...cauKanji,...cauVocab,...cauGrammar]); indexTestHienTai=0;
+        HienThiCauHoiTest(); BatDauDuongDuaTest(40);
+    } catch { document.getElementById('test-cau-hoi-text').textContent = 'Không tải được dữ liệu thi thử. Hãy thử lại.'; }
+}
+
+function TyLeKetQua(thongKe, key) {
+    const muc = thongKe[key];
+    return muc?.total ? Math.round(muc.correct / muc.total * 100) : 0;
+}
+
+function MoLoTrinhN5() {
+    const thongKe = JSON.parse(localStorage.getItem('n5_test_stats') || '{}');
+    const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
+    const soBaiDoc = Object.keys(completed).filter(key => key.startsWith('n5-') && completed[key]).length;
+    const kanjiRate = TyLeKetQua(thongKe, 'kanji');
+    const hanVietRate = TyLeKetQua(thongKe, 'han-viet');
+    const grammarRate = TyLeKetQua(thongKe, 'ngu-phap');
+    const vocabRate = TyLeKetQua(thongKe, 'tu-vung');
+    const readingStats = JSON.parse(localStorage.getItem('n5_reading_stats') || '{}');
+    const tienDoKanjiLuu = localStorage.getItem('tien_do_n5');
+    const soKanjiDaHoc = tienDoKanjiLuu === null ? 0 : Math.min(99, Math.max(0, parseInt(tienDoKanjiLuu) + 1));
+    const kanjiCompletion = Math.round(soKanjiDaHoc / 99 * 100);
+    const readingCompletion = Math.min(100, Math.round(soBaiDoc / 24 * 100));
+    const readingAccuracy = readingStats.total ? Math.round(readingStats.correct / readingStats.total * 100) : 0;
+    const readingRate = readingStats.total ? Math.round(readingCompletion * .6 + readingAccuracy * .4) : readingCompletion;
+    const writingRecord = JSON.parse(localStorage.getItem('writing_test_best_n5_10') || 'null');
+    const writingBest = writingRecord?.score || 0;
+    const mockRate = TyLeKetQua(thongKe, 'thi-thu');
+    const readiness = Math.round(kanjiRate * .15 + vocabRate * .1 + grammarRate * .2 + readingRate * .2 + writingBest * .1 + mockRate * .25);
+    const sai = LaySoCauSai().length;
+    document.getElementById('n5-readiness-score').textContent = readiness;
+    document.getElementById('n5-readiness-ring').style.setProperty('--score', `${readiness * 3.6}deg`);
+    document.getElementById('n5-readiness-title').textContent = readiness >= 80 ? 'Sẵn sàng thi thử' : readiness >= 55 ? 'Đang tiến bộ tốt' : readiness >= 25 ? 'Đang xây nền' : 'Bắt đầu xây nền';
+    document.getElementById('n5-readiness-note').textContent = readiness >= 80 ? 'Hãy duy trì độ chính xác và ôn sạch sổ câu sai.' : 'Ưu tiên hoàn thành lần lượt Hán Việt, ngữ pháp rồi đọc hiểu.';
+    const setBar = (id, value) => document.getElementById(id).style.width = `${value}%`;
+    setBar('n5-kanji-bar', Math.max(kanjiCompletion, hanVietRate, kanjiRate, vocabRate)); setBar('n5-grammar-bar', grammarRate); setBar('n5-reading-bar', readingRate);
+    document.getElementById('n5-kanji-status').textContent = hanVietRate ? `Đã xem ${soKanjiDaHoc}/99 chữ · Hán Việt: ${hanVietRate}%` : `Đã xem ${soKanjiDaHoc}/99 chữ · Hãy kiểm tra âm Hán Việt`;
+    document.getElementById('n5-grammar-status').textContent = grammarRate ? `Độ chính xác: ${grammarRate}%` : 'Chưa có kết quả kiểm tra';
+    document.getElementById('n5-reading-status').textContent = `${soBaiDoc}/24 bài hoàn thành`;
+    document.getElementById('n5-mistake-status').textContent = sai ? `${sai} câu đang chờ bạn chinh phục lại` : 'Tuyệt vời, chưa có câu cần ôn';
+    document.getElementById('n5-mock-status').textContent = mockRate ? `Kết quả tích lũy: ${mockRate}%` : 'Chưa thi thử';
+    document.getElementById('n5-review-button').disabled = !sai;
+    ChuyenTab('man-n5-path');
 }
 
 function CongDiemXP(soDiem) {
@@ -1496,9 +1603,13 @@ async function TaiDanhSachBaiDoc(level) {
     if (list) list.innerHTML = '<div class="reading-loading">Đang mở tủ bài đọc…</div>';
     try {
         if (!readingCache[level]) {
-            const response = await fetch(`./reading/${level}.json?v=2`);
+            const response = await fetch(`./reading/${level}.json?v=3`);
             if (!response.ok) throw new Error('Không tải được dữ liệu');
             readingCache[level] = await response.json();
+            if (level === 'n5') {
+                const moRong = await fetch('./reading/n5_extended.json?v=1');
+                if (moRong.ok) readingCache[level] = readingCache[level].concat(await moRong.json());
+            }
         }
         const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
         if (list) list.innerHTML = readingCache[level].map((lesson, index) => `
@@ -1539,9 +1650,18 @@ function TraLoiDocHieu(questionIndex, optionIndex, button) {
         item.disabled = true;
         if (index === question.answer) item.classList.add('correct');
     });
-    if (optionIndex !== question.answer) button.classList.add('wrong');
+    const dung = optionIndex === question.answer;
+    if (!dung) button.classList.add('wrong');
     card.querySelector('aside').classList.remove('an-giau');
-    if (optionIndex === question.answer) CongDiemXP(5);
+    if (dung) CongDiemXP(5);
+    if (readingLevel === 'n5') {
+        const key = `n5-reading-${readingLesson.id}-${questionIndex}`;
+        const cauOn = { key, skill:'reading', cauHoiText:`Đọc hiểu: <b>${readingLesson.title}</b><br>${question.question}`, dung:question.options[question.answer], luaChon:[...question.options], savedAt:Date.now() };
+        if (dung) XoaCauKhoiSoSai(key); else LuuCauSai(cauOn, question.options[optionIndex]);
+        const stats = JSON.parse(localStorage.getItem('n5_reading_stats') || '{"correct":0,"total":0}');
+        stats.total++; if (dung) stats.correct++;
+        localStorage.setItem('n5_reading_stats', JSON.stringify(stats));
+    }
     if (readingAnswered.size === readingLesson.questions.length) {
         const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
         completed[`${readingLevel}-${readingLesson.id}`] = true;
@@ -1574,4 +1694,11 @@ function DongBaiDoc() {
 window.addEventListener('DOMContentLoaded', () => {
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
+    const tomTat = document.getElementById('n5-path-summary');
+    if (tomTat) {
+        const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
+        const soBai = Object.keys(completed).filter(key => key.startsWith('n5-') && completed[key]).length;
+        const soSai = LaySoCauSai().length;
+        tomTat.textContent = soSai ? `${soBai}/24 bài đọc · ${soSai} câu cần ôn lại` : `${soBai}/24 bài đọc · Sẵn sàng học tiếp`;
+    }
 });
