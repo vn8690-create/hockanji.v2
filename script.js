@@ -1343,7 +1343,7 @@ function CapNhatDuongDuaTest() {
     const sapHetGio = thoiGianTestConLai <= Math.max(30, tongThoiGianTest * .2);
     race.classList.toggle('warning', sapHetGio);
     runner?.classList.toggle('tired', sapHetGio);
-    if (status) status.textContent = sapHetGio ? 'SẮP HẾT SỨC!' : 'GIỮ NHỊP NÀO!';
+    if (status) status.textContent = sapHetGio ? 'SẮP HẾT SỨC!' : 'ĐẠP ĐỀU NÀO!';
 }
 
 function HetGioLamTest() {
@@ -1356,7 +1356,7 @@ function HetGioLamTest() {
     runner?.classList.remove('running', 'tired');
     runner?.classList.add('fallen');
     document.getElementById('race-status').textContent = 'HẾT GIỜ!';
-    document.getElementById('race-message').textContent = 'Vận động viên đã gục trước vạch đích. Luyện lại để nhanh hơn nhé!';
+    document.getElementById('race-message').textContent = 'Tay đua đã ngã xe trước vạch đích. Luyện lại để nhanh hơn nhé!';
     document.querySelectorAll('.nut-option-test').forEach(nut => nut.disabled = true);
     document.getElementById('vung-nut-chuyen-test')?.classList.add('an-giau');
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
