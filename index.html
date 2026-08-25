@@ -8,7 +8,7 @@
       content="width=device-width,
                initial-scale=1,
                viewport-fit=cover">
-    <link rel="stylesheet" href="./style.css?v=20260825-writing-test-v2">
+    <link rel="stylesheet" href="./style.css?v=20260825-race-timer-v1">
 </head>
 <body>
 
@@ -300,6 +300,22 @@
                     <div id="test-tien-do" style="color: #38bdf8; font-weight: bold;">Câu hỏi: 1 / 10</div>
                     <button class="nut-quay-lai" onclick="ChuyenTab('man-test-levels')">HỦY TEST</button>
                 </div>
+
+                <div id="test-race" class="test-race" aria-label="Đường đua thời gian" style="--race-progress:0">
+                    <div class="race-meta"><span id="race-status">GIỮ NHỊP NÀO!</span><time id="race-time" aria-live="polite">05:00</time></div>
+                    <div class="race-track">
+                        <div class="race-lanes" aria-hidden="true"></div>
+                        <div id="race-runner" class="race-runner running" aria-hidden="true">
+                            <svg viewBox="0 0 64 64" role="img">
+                                <circle class="runner-head" cx="36" cy="11" r="7"/>
+                                <g class="runner-body"><path d="M33 19 L26 35 L39 39 L45 25"/><path class="runner-arm-back" d="M29 23 L18 29 L10 24"/><path class="runner-arm-front" d="M38 24 L49 31 L57 26"/></g>
+                                <g class="runner-legs"><path class="runner-leg-back" d="M28 34 L19 47 L8 51"/><path class="runner-leg-front" d="M37 38 L45 49 L57 51"/></g>
+                            </svg>
+                        </div>
+                        <div class="race-flag" aria-hidden="true"><span>🏁</span></div>
+                    </div>
+                    <div id="race-message" class="race-message">Hoàn thành trước khi vận động viên kiệt sức!</div>
+                </div>
                 
                 <div class="the-cyber-card-test">
                     <div id="test-cau-hoi-text" class="cau-hoi-text">Câu hỏi hiện ra ở đây?</div>
@@ -334,6 +350,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260825-writing-test-v3"></script>
+    <script src="./script.js?v=20260825-race-timer-v1"></script>
 </body>
 </html>

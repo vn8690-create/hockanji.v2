@@ -21,6 +21,10 @@ let mangCauHoiTest = [];
 let indexTestHienTai = 0;
 let daBamDapAn = false;
 let tenFileHienTai = ''; 
+let boDemDuongDuaTest = null;
+let tongThoiGianTest = 0;
+let thoiGianTestConLai = 0;
+let testDaHetGio = false;
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -107,6 +111,7 @@ function ClearAllTimers() {
     clearTimeout(boDemStep34);
     clearTimeout(boDemTuDongChuyen);
     clearTimeout(strokeAnimationTimer);
+    clearInterval(boDemDuongDuaTest);
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
@@ -1299,6 +1304,76 @@ function TaoDeTracNghiem(khoGoc) {
 
     indexTestHienTai = 0;
     HienThiCauHoiTest();
+    BatDauDuongDuaTest(mangCauHoiTest.length);
+}
+
+function DinhDangThoiGian(soGiay) {
+    const phut = Math.floor(Math.max(0, soGiay) / 60);
+    const giay = Math.max(0, soGiay) % 60;
+    return `${String(phut).padStart(2, '0')}:${String(giay).padStart(2, '0')}`;
+}
+
+function BatDauDuongDuaTest(soCau) {
+    clearInterval(boDemDuongDuaTest);
+    tongThoiGianTest = Math.max(180, soCau * 30);
+    thoiGianTestConLai = tongThoiGianTest;
+    testDaHetGio = false;
+    const race = document.getElementById('test-race');
+    const runner = document.getElementById('race-runner');
+    race?.classList.remove('warning', 'time-up', 'finished');
+    runner?.classList.remove('fallen', 'celebrating', 'tired');
+    runner?.classList.add('running');
+    CapNhatDuongDuaTest();
+    boDemDuongDuaTest = setInterval(() => {
+        thoiGianTestConLai--;
+        CapNhatDuongDuaTest();
+        if (thoiGianTestConLai <= 0) HetGioLamTest();
+    }, 1000);
+}
+
+function CapNhatDuongDuaTest() {
+    const race = document.getElementById('test-race');
+    const runner = document.getElementById('race-runner');
+    const time = document.getElementById('race-time');
+    const status = document.getElementById('race-status');
+    if (!race) return;
+    const daDung = tongThoiGianTest ? (tongThoiGianTest - thoiGianTestConLai) / tongThoiGianTest : 0;
+    race.style.setProperty('--race-progress', String(Math.min(.88, Math.max(0, daDung * .88))));
+    if (time) time.textContent = DinhDangThoiGian(thoiGianTestConLai);
+    const sapHetGio = thoiGianTestConLai <= Math.max(30, tongThoiGianTest * .2);
+    race.classList.toggle('warning', sapHetGio);
+    runner?.classList.toggle('tired', sapHetGio);
+    if (status) status.textContent = sapHetGio ? 'SẮP HẾT SỨC!' : 'GIỮ NHỊP NÀO!';
+}
+
+function HetGioLamTest() {
+    if (testDaHetGio) return;
+    testDaHetGio = true;
+    clearInterval(boDemDuongDuaTest);
+    const race = document.getElementById('test-race');
+    const runner = document.getElementById('race-runner');
+    race?.classList.add('time-up');
+    runner?.classList.remove('running', 'tired');
+    runner?.classList.add('fallen');
+    document.getElementById('race-status').textContent = 'HẾT GIỜ!';
+    document.getElementById('race-message').textContent = 'Vận động viên đã gục trước vạch đích. Luyện lại để nhanh hơn nhé!';
+    document.querySelectorAll('.nut-option-test').forEach(nut => nut.disabled = true);
+    document.getElementById('vung-nut-chuyen-test')?.classList.add('an-giau');
+    const cauHoiTxt = document.getElementById('test-cau-hoi-text');
+    if (cauHoiTxt) cauHoiTxt.insertAdjacentHTML('beforeend', '<p class="test-time-up-text">⏱ Bài thi đã kết thúc do hết thời gian.</p>');
+}
+
+function KetThucDuongDuaTest() {
+    clearInterval(boDemDuongDuaTest);
+    const race = document.getElementById('test-race');
+    const runner = document.getElementById('race-runner');
+    race?.style.setProperty('--race-progress', '1');
+    race?.classList.remove('warning');
+    race?.classList.add('finished');
+    runner?.classList.remove('running', 'tired');
+    runner?.classList.add('celebrating');
+    document.getElementById('race-status').textContent = 'VỀ ĐÍCH!';
+    document.getElementById('race-message').textContent = `Bạn còn ${DinhDangThoiGian(thoiGianTestConLai)} — thành tích tuyệt vời!`;
 }
 
 function HienThiCauHoiTest() {
@@ -1327,7 +1402,7 @@ function HienThiCauHoiTest() {
 }
 
 function KiemTraKetQuaTest(nutBam, textChon, textDung) {
-    if (daBamDapAn) return; 
+    if (daBamDapAn || testDaHetGio) return;
     daBamDapAn = true;
 
     let tatCaNut = document.querySelectorAll('.nut-option-test');
@@ -1349,6 +1424,7 @@ function KiemTraKetQuaTest(nutBam, textChon, textDung) {
 function CauTestTiepTheo() {
     indexTestHienTai++;
     if (indexTestHienTai >= mangCauHoiTest.length) {
+        KetThucDuongDuaTest();
         const cauHoiTxt = document.getElementById('test-cau-hoi-text');
         const khungDapAn = document.getElementById('test-danh-sach-dap-an');
         const nutChuyenTest = document.getElementById('vung-nut-chuyen-test');
