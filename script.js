@@ -28,6 +28,18 @@ let testDaHetGio = false;
 let soCauDungTest = 0;
 let cheDoOnCauSai = false;
 let cheDoThiThuChuan = false;
+const DINH_MUC_DE_N5 = {
+    '文字・語彙｜問題1　漢字の読み方': 7,
+    '文字・語彙｜問題2　漢字表記': 5,
+    '文字・語彙｜問題3　文脈規定': 6,
+    '文字・語彙｜問題4　言い換え類義': 3,
+    '文法｜問題1　文の文法': 9,
+    '文法｜問題2　文の組み立て': 4,
+    '文法｜問題3　文章の文法': 4,
+    '読解｜問題4　内容理解（短文）': 2,
+    '読解｜問題5　内容理解（中文）': 2,
+    '読解｜問題6　情報検索': 1
+};
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -1528,11 +1540,13 @@ async function BatDauThiThu(level = 'n5') {
         if (level === 'n5') {
             const response = await fetch('./n5_mock_july_style.json?v=1');
             if (!response.ok) throw new Error('data');
-            const deThi = await response.json();
+            const nganHang = await response.json();
+            const deThi = TaoDeN5TheoDinhMuc(nganHang);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n5-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
-            document.getElementById('race-message').textContent = 'Chế độ thi thật: đáp án và lời giải chỉ xuất hiện trong phần ôn câu sai.';
+            const maDe = localStorage.getItem('n5_last_exam_code') || 'N5';
+            document.getElementById('race-message').textContent = `${maDe} · Chế độ thi thật: đáp án và lời giải chỉ xuất hiện trong phần ôn câu sai.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
@@ -1548,6 +1562,27 @@ async function BatDauThiThu(level = 'n5') {
         mangCauHoiTest = tron([...cauKanji,...cauVocab,...cauGrammar]); indexTestHienTai=0;
         HienThiCauHoiTest(); BatDauDuongDuaTest(40);
     } catch { document.getElementById('test-cau-hoi-text').textContent = 'Không tải được dữ liệu thi thử. Hãy thử lại.'; }
+}
+
+function TronLuaChonVaGiuDapAn(item) {
+    const dapAnDung = item.options[item.answer];
+    const options = [...item.options].sort(() => Math.random() - .5);
+    return {...item, options, answer:options.indexOf(dapAnDung)};
+}
+
+function TaoDeN5TheoDinhMuc(nganHang) {
+    const daGapGanDay = JSON.parse(localStorage.getItem('n5_recent_exam_ids') || '[]');
+    const tapGanDay = new Set(daGapGanDay);
+    const deThi = [];
+    Object.entries(DINH_MUC_DE_N5).forEach(([section, soCau]) => {
+        const pool = nganHang.filter(cau => cau.section === section);
+        if (pool.length < soCau) throw new Error(`Thiếu câu cho ${section}`);
+        const uuTienMoi = [...pool].sort((a,b) => Number(tapGanDay.has(a.id)) - Number(tapGanDay.has(b.id)) || Math.random() - .5);
+        deThi.push(...uuTienMoi.slice(0, soCau).map(TronLuaChonVaGiuDapAn));
+    });
+    localStorage.setItem('n5_recent_exam_ids', JSON.stringify(deThi.map(cau => cau.id).slice(-86)));
+    localStorage.setItem('n5_last_exam_code', `N5-${Date.now().toString(36).slice(-6).toUpperCase()}`);
+    return deThi;
 }
 
 function TyLeKetQua(thongKe, key) {
