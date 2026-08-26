@@ -40,6 +40,19 @@ const DINH_MUC_DE_N5 = {
     '読解｜問題5　内容理解（中文）': 2,
     '読解｜問題6　情報検索': 1
 };
+const DINH_MUC_DE_N4 = {
+    '文字・語彙｜問題1　漢字の読み方': 7,
+    '文字・語彙｜問題2　漢字表記': 5,
+    '文字・語彙｜問題3　文脈規定': 8,
+    '文字・語彙｜問題4　言い換え類義': 4,
+    '文字・語彙｜問題5　用法': 4,
+    '文法｜問題1　文の文法': 12,
+    '文法｜問題2　文の組み立て': 4,
+    '文法｜問題3　文章の文法': 4,
+    '読解｜問題4　内容理解（短文）': 4,
+    '読解｜問題5　内容理解（中文）': 4,
+    '読解｜問題6　情報検索': 1
+};
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -1549,6 +1562,34 @@ async function BatDauThiThu(level = 'n5') {
             document.getElementById('race-message').textContent = `${maDe} · Chế độ thi thật: đáp án và lời giải chỉ xuất hiện trong phần ôn câu sai.`;
             return;
         }
+        if (level === 'n4') {
+            const [bankResponse, kanjiResponse] = await Promise.all([
+                fetch('./n4_mock_official_bank.json?v=1'),
+                fetch('./n4_quiz.json?v=6')
+            ]);
+            if (!bankResponse.ok || !kanjiResponse.ok) throw new Error('data');
+            const bank = await bankResponse.json();
+            const kanji = await kanjiResponse.json();
+            const readingPool = kanji.map(item => {
+                const options = item.options?.length === 4 ? [...item.options] : TaoLuaChonKana(item.correct);
+                return {
+                    id:`n4-read-${item.id}`,
+                    section:'文字・語彙｜問題1　漢字の読み方',
+                    instruction:'＿＿＿のことばは、ひらがなでどう書きますか。',
+                    question:`<u>${item.kanji}</u> の読み方を選んでください。`,
+                    options,
+                    answer:options.indexOf(item.correct),
+                    explanation:`${item.kanji} đọc là ${item.correct}（${item.meaning}）。`
+                };
+            });
+            const deThi = TaoDeTheoDinhMuc([...readingPool, ...bank], DINH_MUC_DE_N4, 'n4', 114);
+            cheDoThiThuChuan = true;
+            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n4-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
+            indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 80*60);
+            const maDe = localStorage.getItem('n4_last_exam_code') || 'N4';
+            document.getElementById('race-message').textContent = `${maDe} · 25 phút Từ vựng + 55 phút Ngữ pháp/Đọc hiểu · Không hiển thị đáp án khi đang thi.`;
+            return;
+        }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
         if (!kanjiRes.ok || !grammarRes.ok) throw new Error('data');
         const [kanji, grammar] = await Promise.all([kanjiRes.json(), grammarRes.json()]);
@@ -1571,17 +1612,21 @@ function TronLuaChonVaGiuDapAn(item) {
 }
 
 function TaoDeN5TheoDinhMuc(nganHang) {
-    const daGapGanDay = JSON.parse(localStorage.getItem('n5_recent_exam_ids') || '[]');
+    return TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N5, 'n5', 86);
+}
+
+function TaoDeTheoDinhMuc(nganHang, dinhMuc, level, gioiHanGanDay) {
+    const daGapGanDay = JSON.parse(localStorage.getItem(`${level}_recent_exam_ids`) || '[]');
     const tapGanDay = new Set(daGapGanDay);
     const deThi = [];
-    Object.entries(DINH_MUC_DE_N5).forEach(([section, soCau]) => {
+    Object.entries(dinhMuc).forEach(([section, soCau]) => {
         const pool = nganHang.filter(cau => cau.section === section);
         if (pool.length < soCau) throw new Error(`Thiếu câu cho ${section}`);
         const uuTienMoi = [...pool].sort((a,b) => Number(tapGanDay.has(a.id)) - Number(tapGanDay.has(b.id)) || Math.random() - .5);
         deThi.push(...uuTienMoi.slice(0, soCau).map(TronLuaChonVaGiuDapAn));
     });
-    localStorage.setItem('n5_recent_exam_ids', JSON.stringify([...daGapGanDay, ...deThi.map(cau => cau.id)].slice(-86)));
-    localStorage.setItem('n5_last_exam_code', `N5-${Date.now().toString(36).slice(-6).toUpperCase()}`);
+    localStorage.setItem(`${level}_recent_exam_ids`, JSON.stringify([...daGapGanDay, ...deThi.map(cau => cau.id)].slice(-gioiHanGanDay)));
+    localStorage.setItem(`${level}_last_exam_code`, `${level.toUpperCase()}-${Date.now().toString(36).slice(-6).toUpperCase()}`);
     return deThi;
 }
 
