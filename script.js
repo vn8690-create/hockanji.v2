@@ -1607,46 +1607,19 @@ async function BatDauThiThu(level = 'n5') {
             return;
         }
         if (level === 'n2') {
-            const [kanjiResponse, grammarResponse, readingResponse] = await Promise.all([
-                fetch('./n2.json?v=2'),
-                fetch('./n2_grammar.json?v=2'),
-                fetch('./n2_mock_beta_reading.json?v=1')
+            const [coreResponse, readingResponse] = await Promise.all([
+                fetch('./n2_mock_verified_core.json?v=2'),
+                fetch('./n2_mock_beta_reading.json?v=2')
             ]);
-            if (!kanjiResponse.ok || !grammarResponse.ok || !readingResponse.ok) throw new Error('data');
-            const [kanji, grammar, reading] = await Promise.all([kanjiResponse.json(), grammarResponse.json(), readingResponse.json()]);
-            const pickDistractors = (pool, correct, count = 3) => [...new Set(pool.filter(x => x && x !== correct))].sort(() => Math.random() - .5).slice(0, count);
-            const makeItem = (id, section, instruction, question, correct, pool, explanation) => {
-                const options = [correct, ...pickDistractors(pool, correct)];
-                return {id, section, instruction, question, options, answer:0, explanation};
-            };
-            const onyomiPool = kanji.map(x => x.onyomi).filter(x => x && x !== 'None');
-            const meaningPool = kanji.map(x => x.meaning);
-            const kanjiPool = kanji.map(x => x.kanji);
-            const vocabSections = Object.keys(DINH_MUC_DE_N2).slice(0, 6);
-            const vocabQuotas = [5, 5, 3, 7, 5, 5];
-            let cursor = 0;
-            const vocab = vocabSections.flatMap((section, sectionIndex) => Array.from({length:vocabQuotas[sectionIndex]}, (_, offset) => {
-                const item = kanji[(cursor + offset) % kanji.length];
-                const exampleWord = (item.example || '').split(/[,(（]/)[0].trim() || item.kanji;
-                if (sectionIndex === 0) return makeItem(`n2-v1-${cursor+offset}`, section, '＿＿＿のことばの読み方として最もよいものを選んでください。', `<u>${exampleWord}</u> の最初の漢字の音読みはどれですか。`, item.onyomi, onyomiPool, `${item.kanji} の音読みは ${item.onyomi}。`);
-                if (sectionIndex === 1) return makeItem(`n2-v2-${cursor+offset}`, section, '＿＿＿のことばは漢字でどう書きますか。', `<u>${item.onyomi}</u> に当たる漢字を選んでください。`, item.kanji, kanjiPool, `${item.onyomi} は ${item.kanji}。`);
-                return makeItem(`n2-v${sectionIndex+1}-${cursor+offset}`, section, sectionIndex === 5 ? 'ことばの使い方・意味として最もよいものを選んでください。' : '文脈に最も合う意味を選んでください。', `<b>${exampleWord}</b> に含まれる「${item.kanji}」の中心的な意味はどれですか。`, item.meaning, meaningPool, `${item.kanji}: ${item.meaning}。例：${item.example}`);
-            }).map((made, index, arr) => { if (index === arr.length - 1) cursor += arr.length; return made; }));
-            const grammarSections = Object.keys(DINH_MUC_DE_N2).slice(6, 9);
-            const grammarQuotas = [12, 5, 4];
-            const grammarMeanings = grammar.map(x => x.meaning);
-            let grammarCursor = 0;
-            const grammarItems = grammarSections.flatMap((section, sectionIndex) => Array.from({length:grammarQuotas[sectionIndex]}, (_, offset) => {
-                const item = grammar[(grammarCursor + offset) % grammar.length];
-                return makeItem(`n2-g${sectionIndex+7}-${grammarCursor+offset}`, section, sectionIndex === 0 ? '（　）に入る文法表現として最もよいものを選んでください。' : '文全体の意味が自然になるものを選んでください。', `「${item.meaning}」という意味を表す最も適切な文法はどれですか。`, item.grammar, grammar.map(x => x.grammar), `${item.grammar}: ${item.explanation}`);
-            }).map((made, index, arr) => { if (index === arr.length - 1) grammarCursor += arr.length; return made; }));
-            const nganHang = [...vocab, ...grammarItems, ...reading];
+            if (!coreResponse.ok || !readingResponse.ok) throw new Error('data');
+            const [core, reading] = await Promise.all([coreResponse.json(), readingResponse.json()]);
+            const nganHang = [...core, ...reading];
             const deThi = TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N2, 'n2', 1);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-beta-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = localStorage.getItem('n2_last_exam_code') || 'N2-BETA';
-            document.getElementById('race-message').textContent = `${maDe} · N2 Beta 71 câu / 105 phút · Khung 2 đề 12/2021 và 7/2022.`;
+            document.getElementById('race-message').textContent = `${maDe} · N2 Beta đã hiệu đính · 71 câu / 105 phút · Không dùng câu sinh tự động.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
