@@ -53,6 +53,22 @@ const DINH_MUC_DE_N4 = {
     '読解｜問題5　内容理解（中文）': 3,
     '読解｜問題6　情報検索': 2
 };
+const DINH_MUC_DE_N2 = {
+    '文字・語彙｜問題1　漢字の読み方': 5,
+    '文字・語彙｜問題2　漢字表記': 5,
+    '文字・語彙｜問題3　語形成': 3,
+    '文字・語彙｜問題4　文脈規定': 7,
+    '文字・語彙｜問題5　言い換え類義': 5,
+    '文字・語彙｜問題6　用法': 5,
+    '文法｜問題7　文の文法': 12,
+    '文法｜問題8　文の組み立て': 5,
+    '文法｜問題9　文章の文法': 4,
+    '読解｜問題10　内容理解（短文）': 5,
+    '読解｜問題11　内容理解（中文）': 8,
+    '読解｜問題12　統合理解': 2,
+    '読解｜問題13　主張理解（長文）': 3,
+    '読解｜問題14　情報検索': 2
+};
 
 // Trạng thái khu luyện viết Kanji
 let kanjiDangLuyen = '';
@@ -162,7 +178,7 @@ function ChonCapDoTest(capDo) {
     const tieuDeLevel = document.getElementById('tieu-de-level-test');
     if (tieuDeLevel) tieuDeLevel.innerText = `ĐANG CHỌN: TEST ${capDo.toUpperCase()}`;
     const mockButton = document.getElementById('n5-mock-test-button');
-    if (mockButton) mockButton.hidden = !['n5', 'n4'].includes(capDo);
+    if (mockButton) mockButton.hidden = !['n5', 'n4', 'n2'].includes(capDo);
     ChuyenTab('man-test-the-loai');
 }
 
@@ -1516,7 +1532,7 @@ function LaySoCauSai(level = capDoTestChon || 'n5') {
 }
 
 function LuuCauSai(cauHoi, daChon) {
-    if (!cauHoi || !['n5', 'n4'].includes(capDoTestChon)) return;
+    if (!cauHoi || !['n5', 'n4', 'n2'].includes(capDoTestChon)) return;
     const khoSai = LaySoCauSai(capDoTestChon).filter(item => item.key !== cauHoi.key);
     khoSai.unshift({ ...cauHoi, daChon, skill: cauHoi.skill || theLoaiTestChon, savedAt: Date.now() });
     localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai.slice(0, 160)));
@@ -1529,7 +1545,7 @@ function XoaCauKhoiSoSai(key) {
 }
 
 function LuuKetQuaTest() {
-    if (!['n5', 'n4'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
+    if (!['n5', 'n4', 'n2'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
     const thongKe = JSON.parse(localStorage.getItem(`${capDoTestChon}_test_stats`) || '{}');
     const muc = thongKe[theLoaiTestChon] || { attempts: 0, correct: 0, total: 0 };
     muc.attempts++; muc.correct += soCauDungTest; muc.total += mangCauHoiTest.length; muc.lastAt = Date.now();
@@ -1588,6 +1604,49 @@ async function BatDauThiThu(level = 'n5') {
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 80*60);
             const maDe = localStorage.getItem('n4_last_exam_code') || 'N4';
             document.getElementById('race-message').textContent = `${maDe} · 25 phút Từ vựng + 55 phút Ngữ pháp/Đọc hiểu · Không hiển thị đáp án khi đang thi.`;
+            return;
+        }
+        if (level === 'n2') {
+            const [kanjiResponse, grammarResponse, readingResponse] = await Promise.all([
+                fetch('./n2.json?v=2'),
+                fetch('./n2_grammar.json?v=2'),
+                fetch('./n2_mock_beta_reading.json?v=1')
+            ]);
+            if (!kanjiResponse.ok || !grammarResponse.ok || !readingResponse.ok) throw new Error('data');
+            const [kanji, grammar, reading] = await Promise.all([kanjiResponse.json(), grammarResponse.json(), readingResponse.json()]);
+            const pickDistractors = (pool, correct, count = 3) => [...new Set(pool.filter(x => x && x !== correct))].sort(() => Math.random() - .5).slice(0, count);
+            const makeItem = (id, section, instruction, question, correct, pool, explanation) => {
+                const options = [correct, ...pickDistractors(pool, correct)];
+                return {id, section, instruction, question, options, answer:0, explanation};
+            };
+            const onyomiPool = kanji.map(x => x.onyomi).filter(x => x && x !== 'None');
+            const meaningPool = kanji.map(x => x.meaning);
+            const kanjiPool = kanji.map(x => x.kanji);
+            const vocabSections = Object.keys(DINH_MUC_DE_N2).slice(0, 6);
+            const vocabQuotas = [5, 5, 3, 7, 5, 5];
+            let cursor = 0;
+            const vocab = vocabSections.flatMap((section, sectionIndex) => Array.from({length:vocabQuotas[sectionIndex]}, (_, offset) => {
+                const item = kanji[(cursor + offset) % kanji.length];
+                const exampleWord = (item.example || '').split(/[,(（]/)[0].trim() || item.kanji;
+                if (sectionIndex === 0) return makeItem(`n2-v1-${cursor+offset}`, section, '＿＿＿のことばの読み方として最もよいものを選んでください。', `<u>${exampleWord}</u> の最初の漢字の音読みはどれですか。`, item.onyomi, onyomiPool, `${item.kanji} の音読みは ${item.onyomi}。`);
+                if (sectionIndex === 1) return makeItem(`n2-v2-${cursor+offset}`, section, '＿＿＿のことばは漢字でどう書きますか。', `<u>${item.onyomi}</u> に当たる漢字を選んでください。`, item.kanji, kanjiPool, `${item.onyomi} は ${item.kanji}。`);
+                return makeItem(`n2-v${sectionIndex+1}-${cursor+offset}`, section, sectionIndex === 5 ? 'ことばの使い方・意味として最もよいものを選んでください。' : '文脈に最も合う意味を選んでください。', `<b>${exampleWord}</b> に含まれる「${item.kanji}」の中心的な意味はどれですか。`, item.meaning, meaningPool, `${item.kanji}: ${item.meaning}。例：${item.example}`);
+            }).map((made, index, arr) => { if (index === arr.length - 1) cursor += arr.length; return made; }));
+            const grammarSections = Object.keys(DINH_MUC_DE_N2).slice(6, 9);
+            const grammarQuotas = [12, 5, 4];
+            const grammarMeanings = grammar.map(x => x.meaning);
+            let grammarCursor = 0;
+            const grammarItems = grammarSections.flatMap((section, sectionIndex) => Array.from({length:grammarQuotas[sectionIndex]}, (_, offset) => {
+                const item = grammar[(grammarCursor + offset) % grammar.length];
+                return makeItem(`n2-g${sectionIndex+7}-${grammarCursor+offset}`, section, sectionIndex === 0 ? '（　）に入る文法表現として最もよいものを選んでください。' : '文全体の意味が自然になるものを選んでください。', `「${item.meaning}」という意味を表す最も適切な文法はどれですか。`, item.grammar, grammar.map(x => x.grammar), `${item.grammar}: ${item.explanation}`);
+            }).map((made, index, arr) => { if (index === arr.length - 1) grammarCursor += arr.length; return made; }));
+            const nganHang = [...vocab, ...grammarItems, ...reading];
+            const deThi = TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N2, 'n2', 1);
+            cheDoThiThuChuan = true;
+            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-beta-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
+            indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
+            const maDe = localStorage.getItem('n2_last_exam_code') || 'N2-BETA';
+            document.getElementById('race-message').textContent = `${maDe} · N2 Beta 71 câu / 105 phút · Khung 2 đề 12/2021 và 7/2022.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
