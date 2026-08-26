@@ -1582,7 +1582,7 @@ async function BatDauThiThu(level = 'n5') {
                     explanation:`${item.kanji} đọc là ${item.correct}（${item.meaning}）。`
                 };
             });
-            const deThi = TaoDeTheoDinhMuc([...readingPool, ...bank], DINH_MUC_DE_N4, 'n4', 114);
+            const deThi = TaoDeTheoDinhMuc([...readingPool, ...bank], DINH_MUC_DE_N4, 'n4', 7);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n4-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 80*60);
@@ -1612,21 +1612,36 @@ function TronLuaChonVaGiuDapAn(item) {
 }
 
 function TaoDeN5TheoDinhMuc(nganHang) {
-    return TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N5, 'n5', 86);
+    return TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N5, 'n5', 2);
 }
 
-function TaoDeTheoDinhMuc(nganHang, dinhMuc, level, gioiHanGanDay) {
-    const daGapGanDay = JSON.parse(localStorage.getItem(`${level}_recent_exam_ids`) || '[]');
-    const tapGanDay = new Set(daGapGanDay);
+function TaoDeTheoDinhMuc(nganHang, dinhMuc, level, soDeKhoa = 7) {
+    const lichSuKey = `${level}_exam_history_v2`;
+    const tanSuatKey = `${level}_exam_usage_v2`;
+    const lichSu = JSON.parse(localStorage.getItem(lichSuKey) || '[]');
+    const tanSuat = JSON.parse(localStorage.getItem(tanSuatKey) || '{}');
+    const tapBiKhoa = new Set(lichSu.slice(-soDeKhoa).flatMap(de => de.ids || []));
+    const lanGapGanNhat = new Map();
+    lichSu.forEach((de, thuTu) => (de.ids || []).forEach(id => lanGapGanNhat.set(id, thuTu)));
     const deThi = [];
     Object.entries(dinhMuc).forEach(([section, soCau]) => {
         const pool = nganHang.filter(cau => cau.section === section);
         if (pool.length < soCau) throw new Error(`Thiếu câu cho ${section}`);
-        const uuTienMoi = [...pool].sort((a,b) => Number(tapGanDay.has(a.id)) - Number(tapGanDay.has(b.id)) || Math.random() - .5);
-        deThi.push(...uuTienMoi.slice(0, soCau).map(TronLuaChonVaGiuDapAn));
+        const chuaBiKhoa = pool.filter(cau => !tapBiKhoa.has(cau.id));
+        const ungVien = chuaBiKhoa.length >= soCau ? chuaBiKhoa : pool;
+        const uuTienCongBang = [...ungVien].sort((a,b) =>
+            (tanSuat[a.id] || 0) - (tanSuat[b.id] || 0) ||
+            (lanGapGanNhat.get(a.id) ?? -1) - (lanGapGanNhat.get(b.id) ?? -1) ||
+            Math.random() - .5
+        );
+        deThi.push(...uuTienCongBang.slice(0, soCau).map(TronLuaChonVaGiuDapAn));
     });
-    localStorage.setItem(`${level}_recent_exam_ids`, JSON.stringify([...daGapGanDay, ...deThi.map(cau => cau.id)].slice(-gioiHanGanDay)));
-    localStorage.setItem(`${level}_last_exam_code`, `${level.toUpperCase()}-${Date.now().toString(36).slice(-6).toUpperCase()}`);
+    const ids = deThi.map(cau => cau.id);
+    ids.forEach(id => { tanSuat[id] = (tanSuat[id] || 0) + 1; });
+    const code = `${level.toUpperCase()}-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+    localStorage.setItem(lichSuKey, JSON.stringify([...lichSu, {code, ids, at:Date.now()}].slice(-30)));
+    localStorage.setItem(tanSuatKey, JSON.stringify(tanSuat));
+    localStorage.setItem(`${level}_last_exam_code`, code);
     return deThi;
 }
 
