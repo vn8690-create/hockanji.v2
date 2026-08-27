@@ -1549,6 +1549,7 @@ function CapNhatDuongDuaTest() {
 
 function HetGioLamTest() {
     if (testDaHetGio) return;
+    ChamCauThiThuHienTai();
     testDaHetGio = true;
     clearInterval(boDemDuongDuaTest);
     const race = document.getElementById('test-race');
@@ -1598,7 +1599,24 @@ function HienThiCauHoiTest() {
 }
 
 function KiemTraKetQuaTest(nutBam, textChon, textDung) {
-    if (daBamDapAn || testDaHetGio) return;
+    if ((!cheDoThiThuChuan && daBamDapAn) || testDaHetGio) return;
+
+    if (cheDoThiThuChuan) {
+        const cauHienTai = mangCauHoiTest[indexTestHienTai];
+        const laLanChonDau = cauHienTai.selectedAnswer === undefined;
+        cauHienTai.selectedAnswer = textChon;
+        cauHienTai.wasCorrect = textChon === textDung;
+        daBamDapAn = true;
+        document.querySelectorAll('.nut-option-test').forEach(nut => {
+            nut.disabled = false;
+            nut.classList.remove('exam-selected-answer');
+        });
+        nutBam.classList.add('exam-selected-answer');
+        if (laLanChonDau) GhiNhanHoatDong('questions', 1);
+        document.getElementById('vung-nut-chuyen-test')?.classList.remove('an-giau');
+        return;
+    }
+
     daBamDapAn = true;
     GhiNhanHoatDong('questions', 1);
     if (cheDoOnCauSai) GhiNhanHoatDong('reviews', 1);
@@ -1629,7 +1647,23 @@ function KiemTraKetQuaTest(nutBam, textChon, textDung) {
     if (nutChuyenTest) nutChuyenTest.classList.remove('an-giau');
 }
 
+function ChamCauThiThuHienTai() {
+    if (!cheDoThiThuChuan) return;
+    const cauHienTai = mangCauHoiTest[indexTestHienTai];
+    if (!cauHienTai || cauHienTai.examGraded || cauHienTai.selectedAnswer === undefined) return;
+    cauHienTai.examGraded = true;
+    cauHienTai.wasCorrect = cauHienTai.selectedAnswer === cauHienTai.dung;
+    if (cauHienTai.wasCorrect) {
+        soCauDungTest++;
+        CongDiemXP(5);
+        XoaCauKhoiSoSai(cauHienTai.key);
+    } else {
+        LuuCauSai(cauHienTai, cauHienTai.selectedAnswer);
+    }
+}
+
 function CauTestTiepTheo() {
+    ChamCauThiThuHienTai();
     indexTestHienTai++;
     if (indexTestHienTai >= mangCauHoiTest.length) {
         KetThucDuongDuaTest();
