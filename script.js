@@ -140,21 +140,9 @@ function TaoBangAmHanViet() {
 async function NapBangHanVietToanCuc() {
     if (BANG_HAN_VIET_TOAN_CUC) return;
     try {
-        const responses = await Promise.all(
-            ['n5', 'n4', 'n3', 'n2', 'n1'].map(level => fetch(`./${level}.json?v=han-viet-2`))
-        );
-        const cacCapDo = await Promise.all(responses.map(response => {
-            if (!response.ok) throw new Error('Không tải được bảng Hán Việt');
-            return response.json();
-        }));
-        const bang = { ...HAN_VIET_BO_SUNG };
-        cacCapDo.flat().forEach(item => {
-            const chu = item.kanji || item.chu;
-            if (chu?.length === 1) {
-                bang[chu] = (item.han_viet || LayAmHanVietTuNghia(item.meaning || item.nghia)).toUpperCase();
-            }
-        });
-        BANG_HAN_VIET_TOAN_CUC = bang;
+        const response = await fetch('./han_viet_map.json?v=1');
+        if (!response.ok) throw new Error('Không tải được bảng Hán Việt');
+        BANG_HAN_VIET_TOAN_CUC = { ...HAN_VIET_BO_SUNG, ...await response.json() };
     } catch (error) {
         BANG_HAN_VIET_TOAN_CUC = { ...HAN_VIET_BO_SUNG };
     }
@@ -167,7 +155,18 @@ function DinhDangTuGhep(viDu = '') {
         if (!khop) return '';
         const tuNhat = khop[1];
         const nghia = khop[2] || '';
-        const amHan = [...tuNhat].map(chu => bangAmHan[chu] || '').filter(Boolean).join(' ');
+        let amTruoc = '';
+        let thieuAmHan = false;
+        const cacAmHan = [...tuNhat].map(chu => {
+            if (chu === '々') return amTruoc;
+            if (!/\p{Script=Han}/u.test(chu)) return '';
+            const am = bangAmHan[chu] || '';
+            if (!am) thieuAmHan = true;
+            if (am) amTruoc = am;
+            return am;
+        }).filter(Boolean);
+        // Không hiển thị một nửa âm Hán Việt vì dễ khiến người học hiểu sai.
+        const amHan = thieuAmHan ? '' : cacAmHan.join(' ');
         return `<div class="compound-item"><b class="compound-kanji">${tuNhat}</b>${amHan ? `<strong>${amHan}</strong>` : ''}${nghia ? `<span>- ${nghia.toUpperCase()}</span>` : ''}</div>`;
     }).filter(Boolean).join('');
 }
