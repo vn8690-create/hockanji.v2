@@ -118,6 +118,7 @@ const HAN_VIET_BO_SUNG = {
     語: 'NGỮ', 人: 'NHÂN', 大: 'ĐẠI', 小: 'TIỂU', 中: 'TRUNG',
     正: 'CHÍNH'
 };
+let BANG_HAN_VIET_TOAN_CUC = null;
 
 function LayAmHanVietTuNghia(nghia = '') {
     const phanDau = nghia.split('(')[0].trim();
@@ -127,13 +128,36 @@ function LayAmHanVietTuNghia(nghia = '') {
 }
 
 function TaoBangAmHanViet() {
-    const bang = { ...HAN_VIET_BO_SUNG };
+    const bang = { ...HAN_VIET_BO_SUNG, ...(BANG_HAN_VIET_TOAN_CUC || {}) };
     const nguon = [...mảngDữLiệuGốcĐãTải, ...duLieuHienTai];
     nguon.forEach(item => {
         const chu = item.kanji || item.chu;
         if (chu?.length === 1) bang[chu] = (item.han_viet || LayAmHanVietTuNghia(item.meaning || item.nghia)).toUpperCase();
     });
     return bang;
+}
+
+async function NapBangHanVietToanCuc() {
+    if (BANG_HAN_VIET_TOAN_CUC) return;
+    try {
+        const responses = await Promise.all(
+            ['n5', 'n4', 'n3', 'n2', 'n1'].map(level => fetch(`./${level}.json?v=han-viet-2`))
+        );
+        const cacCapDo = await Promise.all(responses.map(response => {
+            if (!response.ok) throw new Error('Không tải được bảng Hán Việt');
+            return response.json();
+        }));
+        const bang = { ...HAN_VIET_BO_SUNG };
+        cacCapDo.flat().forEach(item => {
+            const chu = item.kanji || item.chu;
+            if (chu?.length === 1) {
+                bang[chu] = (item.han_viet || LayAmHanVietTuNghia(item.meaning || item.nghia)).toUpperCase();
+            }
+        });
+        BANG_HAN_VIET_TOAN_CUC = bang;
+    } catch (error) {
+        BANG_HAN_VIET_TOAN_CUC = { ...HAN_VIET_BO_SUNG };
+    }
 }
 
 function DinhDangTuGhep(viDu = '') {
@@ -309,7 +333,7 @@ function ThoatHocChiTiet() {
 // =========================================================================
 // TẢI DỮ LIỆU ĐỘNG CHO FLASHCARD HỌC
 // =========================================================================
-function TaiDuLieuHoc(loaiHoc, tenFile) {
+async function TaiDuLieuHoc(loaiHoc, tenFile) {
     loaiHocHienTai = loaiHoc;
     tenFileHienTai = tenFile; 
     
@@ -334,6 +358,10 @@ function TaiDuLieuHoc(loaiHoc, tenFile) {
     if (tieuDe) tieuDe.innerText = `ĐANG KẾT NỐI...`;
     if (vungChua) vungChua.innerHTML = `<div class="loading-text">⚡ Đang đồng bộ bộ não dữ liệu...</div>`;
     if (nutChuyen) nutChuyen.classList.add('an-giau');
+
+    // Nạp một lần bảng Hán Việt của toàn bộ N5–N1. Nhờ vậy từ ghép vẫn đủ âm
+    // khi một chữ thành phần không nằm trong riêng danh sách Kanji của cấp đang học.
+    if (loaiHoc === 'kanji') await NapBangHanVietToanCuc();
 
     // --- LOGIC ĐÁNH CHẶN THÔNG MINH CHO HỌC THEO NGÀY ---
     if (dangHocTheoNgay) {
