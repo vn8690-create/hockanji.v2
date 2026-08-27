@@ -1749,19 +1749,35 @@ async function BatDauThiThu(level = 'n5') {
             return;
         }
         if (level === 'n2') {
-            const [coreResponse, readingResponse] = await Promise.all([
+            const [coreResponse, readingResponse, core02Response, reading02Response] = await Promise.all([
                 fetch('./n2_mock_verified_core.json?v=4'),
-                fetch('./n2_mock_beta_reading.json?v=4')
+                fetch('./n2_mock_beta_reading.json?v=4'),
+                fetch('./n2_mock_set02_core.json?v=1'),
+                fetch('./n2_mock_set02_reading.json?v=1')
             ]);
-            if (!coreResponse.ok || !readingResponse.ok) throw new Error('data');
-            const [core, reading] = await Promise.all([coreResponse.json(), readingResponse.json()]);
-            const nganHang = [...core, ...reading];
+            if (!coreResponse.ok || !readingResponse.ok || !core02Response.ok || !reading02Response.ok) throw new Error('data');
+            const [core, reading, core02, reading02] = await Promise.all([
+                coreResponse.json(), readingResponse.json(), core02Response.json(), reading02Response.json()
+            ]);
+            const de01 = [...core, ...reading];
+            const de02 = [...core02, ...reading02];
+            const de03 = [];
+            Object.entries(DINH_MUC_DE_N2).forEach(([section, quota], sectionIndex) => {
+                const nhom01 = de01.filter(item => item.section === section);
+                const nhom02 = de02.filter(item => item.section === section);
+                const layTuDe01 = sectionIndex % 2 === 0 ? Math.ceil(quota / 2) : Math.floor(quota / 2);
+                de03.push(...nhom01.slice(0, layTuDe01), ...nhom02.slice(layTuDe01, quota));
+            });
+            const maDeTruoc = Number(localStorage.getItem('n2_mock_set_last') || 0);
+            const soDe = maDeTruoc % 3 + 1;
+            localStorage.setItem('n2_mock_set_last', String(soDe));
+            const nganHang = soDe === 1 ? de01 : soDe === 2 ? de02 : de03;
             const deThi = TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N2, 'n2', 1);
             cheDoThiThuChuan = true;
-            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-beta-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
+            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
-            const maDe = localStorage.getItem('n2_last_exam_code') || 'N2-BETA';
-            document.getElementById('race-message').textContent = `${maDe} · N2 Beta đã hiệu đính · 71 câu / 105 phút · Không dùng câu sinh tự động.`;
+            const maDe = `N2-${String(soDe).padStart(2, '0')}`;
+            document.getElementById('race-message').textContent = `${maDe} · 71 câu / 105 phút · Mã đề tự luân phiên, không phát lại ngay đề vừa làm.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
