@@ -115,7 +115,8 @@ const HAN_VIET_BO_SUNG = {
     地: 'ĐỊA', 鉄: 'THIẾT', 電: 'ĐIỆN', 車: 'XA', 学: 'HỌC', 校: 'HIỆU',
     生: 'SINH', 先: 'TIÊN', 会: 'HỘI', 社: 'XÃ', 時: 'THỜI', 間: 'GIAN',
     曜: 'DIỆU', 日: 'NHẬT', 月: 'NGUYỆT', 年: 'NIÊN', 国: 'QUỐC',
-    語: 'NGỮ', 人: 'NHÂN', 大: 'ĐẠI', 小: 'TIỂU', 中: 'TRUNG'
+    語: 'NGỮ', 人: 'NHÂN', 大: 'ĐẠI', 小: 'TIỂU', 中: 'TRUNG',
+    正: 'CHÍNH'
 };
 
 function LayAmHanVietTuNghia(nghia = '') {
