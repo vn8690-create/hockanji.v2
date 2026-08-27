@@ -9,7 +9,7 @@
                initial-scale=1,
                viewport-fit=cover">
     <title>Học tiếng Nhật · JLPT N5–N1</title>
-    <link rel="stylesheet" href="./style.css?v=20260825-n5-official-mock-v1">
+    <link rel="stylesheet" href="./style.css?v=20260827-focus-timer-v1">
 </head>
 <body>
 
@@ -336,23 +336,17 @@
                     <button class="nut-quay-lai" onclick="ChuyenTab('man-test-levels')">HỦY TEST</button>
                 </div>
 
-                <div id="test-race" class="test-race" aria-label="Đường đua thời gian" style="--race-progress:0">
-                    <div class="race-meta"><span id="race-status">ĐẠP ĐỀU NÀO!</span><time id="race-time" aria-live="polite">05:00</time></div>
-                    <div class="race-track">
-                        <div class="race-lanes" aria-hidden="true"></div>
-                        <div id="race-runner" class="race-runner running" aria-hidden="true">
-                            <svg viewBox="0 0 82 58" role="img">
-                                <g class="bike-wheel bike-wheel-back"><circle cx="17" cy="44" r="11"/><path d="M17 33V55M6 44H28M9 36L25 52M25 36L9 52"/></g>
-                                <g class="bike-wheel bike-wheel-front"><circle cx="64" cy="44" r="11"/><path d="M64 33V55M53 44H75M56 36L72 52M72 36L56 52"/></g>
-                                <path class="bike-frame" d="M17 44L31 25L43 44H17L54 25L64 44H43L31 25H54M54 25L59 18M55 18H65M31 25L27 19M23 19H31"/>
-                                <circle class="cyclist-head" cx="39" cy="7" r="6"/>
-                                <path class="cyclist-body" d="M38 14L45 25L55 25M39 15L31 25"/>
-                                <g class="cyclist-legs"><path class="cyclist-leg-one" d="M45 25L39 34L43 43"/><path class="cyclist-leg-two" d="M45 25L49 35L43 43"/></g>
-                            </svg>
-                        </div>
-                        <div class="race-flag" aria-hidden="true"><span>🏁</span></div>
+                <div id="test-race" class="test-race" aria-label="Đồng hồ làm bài" style="--race-progress:0%;--time-progress:360deg">
+                    <div class="timer-face">
+                        <small>THỜI GIAN CÒN LẠI</small>
+                        <time id="race-time" aria-live="polite">05:00</time>
+                        <strong id="race-status">TẬP TRUNG LÀM BÀI</strong>
                     </div>
-                    <div id="race-message" class="race-message">Hoàn thành trước khi tay đua hết sức!</div>
+                    <div class="timer-details">
+                        <div class="timer-question-meta"><span>TIẾN ĐỘ</span><b id="race-question-count">1 / 10 CÂU</b></div>
+                        <div class="timer-progress" aria-hidden="true"><i></i></div>
+                        <div id="race-message" class="race-message">Bình tĩnh, đọc kỹ và giữ nhịp làm bài.</div>
+                    </div>
                 </div>
                 
                 <div class="the-cyber-card-test">
@@ -388,6 +382,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260827-han-viet-map-v1"></script>
+    <script src="./script.js?v=20260827-focus-timer-v1"></script>
 </body>
 </html>
