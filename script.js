@@ -1422,10 +1422,7 @@ function BatDauDuongDuaTest(soCau, soGiayCoDinh = null) {
     thoiGianTestConLai = tongThoiGianTest;
     testDaHetGio = false;
     const race = document.getElementById('test-race');
-    const runner = document.getElementById('race-runner');
     race?.classList.remove('warning', 'time-up', 'finished');
-    runner?.classList.remove('fallen', 'celebrating', 'tired');
-    runner?.classList.add('running');
     CapNhatDuongDuaTest();
     boDemDuongDuaTest = setInterval(() => {
         thoiGianTestConLai--;
@@ -1436,17 +1433,20 @@ function BatDauDuongDuaTest(soCau, soGiayCoDinh = null) {
 
 function CapNhatDuongDuaTest() {
     const race = document.getElementById('test-race');
-    const runner = document.getElementById('race-runner');
     const time = document.getElementById('race-time');
     const status = document.getElementById('race-status');
+    const questionCount = document.getElementById('race-question-count');
     if (!race) return;
-    const daDung = tongThoiGianTest ? (tongThoiGianTest - thoiGianTestConLai) / tongThoiGianTest : 0;
-    race.style.setProperty('--race-progress', String(Math.min(.88, Math.max(0, daDung * .88))));
+    const tiLeThoiGian = tongThoiGianTest ? thoiGianTestConLai / tongThoiGianTest : 0;
+    const tongSoCau = mangCauHoiTest.length || 1;
+    const soCauHienTai = Math.min(indexTestHienTai + 1, tongSoCau);
+    race.style.setProperty('--time-progress', `${Math.max(0, tiLeThoiGian) * 360}deg`);
+    race.style.setProperty('--race-progress', `${soCauHienTai / tongSoCau * 100}%`);
     if (time) time.textContent = DinhDangThoiGian(thoiGianTestConLai);
+    if (questionCount) questionCount.textContent = `${soCauHienTai} / ${tongSoCau} CÂU`;
     const sapHetGio = thoiGianTestConLai <= Math.max(30, tongThoiGianTest * .2);
     race.classList.toggle('warning', sapHetGio);
-    runner?.classList.toggle('tired', sapHetGio);
-    if (status) status.textContent = sapHetGio ? 'SẮP HẾT SỨC!' : 'ĐẠP ĐỀU NÀO!';
+    if (status) status.textContent = sapHetGio ? 'SẮP HẾT GIỜ' : 'TẬP TRUNG LÀM BÀI';
 }
 
 function HetGioLamTest() {
@@ -1454,12 +1454,9 @@ function HetGioLamTest() {
     testDaHetGio = true;
     clearInterval(boDemDuongDuaTest);
     const race = document.getElementById('test-race');
-    const runner = document.getElementById('race-runner');
     race?.classList.add('time-up');
-    runner?.classList.remove('running', 'tired');
-    runner?.classList.add('fallen');
     document.getElementById('race-status').textContent = 'HẾT GIỜ!';
-    document.getElementById('race-message').textContent = 'Tay đua đã ngã xe trước vạch đích. Luyện lại để nhanh hơn nhé!';
+    document.getElementById('race-message').textContent = 'Bài thi đã kết thúc. Xem lại phần yếu rồi thử lại nhé!';
     document.querySelectorAll('.nut-option-test').forEach(nut => nut.disabled = true);
     document.getElementById('vung-nut-chuyen-test')?.classList.add('an-giau');
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
@@ -1469,13 +1466,10 @@ function HetGioLamTest() {
 function KetThucDuongDuaTest() {
     clearInterval(boDemDuongDuaTest);
     const race = document.getElementById('test-race');
-    const runner = document.getElementById('race-runner');
-    race?.style.setProperty('--race-progress', '1');
+    race?.style.setProperty('--race-progress', '100%');
     race?.classList.remove('warning');
     race?.classList.add('finished');
-    runner?.classList.remove('running', 'tired');
-    runner?.classList.add('celebrating');
-    document.getElementById('race-status').textContent = 'VỀ ĐÍCH!';
+    document.getElementById('race-status').textContent = 'HOÀN THÀNH!';
     document.getElementById('race-message').textContent = `Bạn còn ${DinhDangThoiGian(thoiGianTestConLai)} — thành tích tuyệt vời!`;
 }
 
@@ -1487,6 +1481,7 @@ function HienThiCauHoiTest() {
     let phanTuCau = mangCauHoiTest[indexTestHienTai];
     const testTienDo = document.getElementById('test-tien-do');
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
+    CapNhatDuongDuaTest();
     
     if (testTienDo) testTienDo.innerHTML = `${phanTuCau.section ? `<small class="exam-section-name">${phanTuCau.section}</small>` : ''}Câu hỏi: ${indexTestHienTai + 1} / ${mangCauHoiTest.length}`;
     if (cauHoiTxt) cauHoiTxt.innerHTML = `${phanTuCau.instruction ? `<div class="exam-instruction">${phanTuCau.instruction}</div>` : ''}${phanTuCau.cauHoiText}`;
