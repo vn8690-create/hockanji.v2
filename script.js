@@ -99,6 +99,102 @@ let readingCache = {};
 let readingLevel = 'n5';
 let readingLesson = null;
 let readingAnswered = new Set();
+let avatarDangChon = '🦊';
+
+function KhoaNgayHienTai(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function TaoIdHocVien() {
+    const bytes = new Uint8Array(4);
+    if (globalThis.crypto?.getRandomValues) crypto.getRandomValues(bytes);
+    else bytes.forEach((_, i) => { bytes[i] = Math.floor(Math.random() * 256); });
+    return `JLPT-${[...bytes].map(n => n.toString(16).padStart(2, '0')).join('').slice(0, 6).toUpperCase()}`;
+}
+
+function LayHoSoNguoiHoc() {
+    try {
+        const daLuu = JSON.parse(localStorage.getItem('jlpt_user_profile') || 'null');
+        if (daLuu?.id) return daLuu;
+    } catch {}
+    const profile = { id: TaoIdHocVien(), nickname: 'Học viên JLPT', avatar: '🦊', publicNickname: false };
+    localStorage.setItem('jlpt_user_profile', JSON.stringify(profile));
+    return profile;
+}
+
+function LayNhiemVuHomNay() {
+    const today = KhoaNgayHienTai();
+    try {
+        const state = JSON.parse(localStorage.getItem('jlpt_daily_mission') || 'null');
+        if (state?.date === today) return state;
+    } catch {}
+    const state = { date: today, xp: 0, questions: 0, reviews: 0 };
+    localStorage.setItem('jlpt_daily_mission', JSON.stringify(state));
+    return state;
+}
+
+function GhiNhanHoatDong(type, amount = 1) {
+    const state = LayNhiemVuHomNay();
+    if (type === 'xp') state.xp += amount;
+    if (type === 'questions') state.questions += amount;
+    if (type === 'reviews') state.reviews += amount;
+    localStorage.setItem('jlpt_daily_mission', JSON.stringify(state));
+
+    const today = KhoaNgayHienTai();
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    let streak = { lastDate: '', count: 0 };
+    try { streak = JSON.parse(localStorage.getItem('jlpt_learning_streak') || 'null') || streak; } catch {}
+    if (streak.lastDate !== today) {
+        streak.count = streak.lastDate === KhoaNgayHienTai(yesterday) ? streak.count + 1 : 1;
+        streak.lastDate = today;
+        localStorage.setItem('jlpt_learning_streak', JSON.stringify(streak));
+    }
+    CapNhatNhiemVuHomNay();
+}
+
+function CapNhatNhiemVuHomNay() {
+    const profile = LayHoSoNguoiHoc();
+    const state = LayNhiemVuHomNay();
+    let streak = { count: 0 };
+    try { streak = JSON.parse(localStorage.getItem('jlpt_learning_streak') || 'null') || streak; } catch {}
+    const soCauDenHan = ['n5', 'n4', 'n2'].flatMap(level => LaySoCauSai(level)).filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now()).length;
+    const mucOnSai = Math.min(3, soCauDenHan);
+    const goals = [state.xp >= 30, state.questions >= 10, mucOnSai === 0 || state.reviews >= mucOnSai];
+    const completed = goals.filter(Boolean).length;
+    const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    setText('home-user-avatar', profile.avatar); setText('home-user-name', profile.nickname); setText('home-user-id', profile.id);
+    setText('daily-streak', streak.count || 0); setText('daily-complete-count', `${completed}/3 hoàn thành`); setText('daily-percent', `${Math.round(completed / 3 * 100)}%`);
+    setText('mission-xp-text', `${Math.min(state.xp, 30)}/30 XP`); setText('mission-question-text', `${Math.min(state.questions, 10)}/10 câu`);
+    setText('mission-review-title', mucOnSai ? `Ôn lại ${mucOnSai} câu sai` : 'Giữ sạch sổ câu sai');
+    setText('mission-review-text', mucOnSai ? `${Math.min(state.reviews, mucOnSai)}/${mucOnSai} câu` : 'Không có câu đến hạn');
+    const bar = document.getElementById('daily-progress-bar'); if (bar) bar.style.width = `${completed / 3 * 100}%`;
+    [['mission-xp-check', goals[0]], ['mission-question-check', goals[1]], ['mission-review-check', goals[2]]].forEach(([id, done]) => {
+        const el = document.getElementById(id); if (!el) return; el.textContent = done ? '✓' : '○'; el.closest('div')?.classList.toggle('done', done);
+    });
+}
+
+function MoHoSoNguoiHoc() {
+    const profile = LayHoSoNguoiHoc(); avatarDangChon = profile.avatar;
+    document.getElementById('profile-avatar-preview').textContent = profile.avatar;
+    document.getElementById('profile-nickname').value = profile.nickname;
+    document.getElementById('profile-id').value = profile.id;
+    document.getElementById('profile-public-name').checked = !!profile.publicNickname;
+    document.querySelectorAll('.avatar-picker button').forEach(button => button.classList.toggle('active', button.textContent === profile.avatar));
+    ChuyenTab('man-profile');
+}
+
+function ChonAvatar(avatar, button) {
+    avatarDangChon = avatar; document.getElementById('profile-avatar-preview').textContent = avatar;
+    document.querySelectorAll('.avatar-picker button').forEach(item => item.classList.toggle('active', item === button));
+}
+
+function LuuHoSoNguoiHoc() {
+    const old = LayHoSoNguoiHoc();
+    const nickname = document.getElementById('profile-nickname').value.trim().slice(0, 18) || 'Học viên JLPT';
+    const profile = { ...old, nickname, avatar: avatarDangChon, publicNickname: document.getElementById('profile-public-name').checked };
+    localStorage.setItem('jlpt_user_profile', JSON.stringify(profile));
+    CapNhatNhiemVuHomNay(); ChuyenTab('man-home');
+}
 
 // --- BIẾN PHỤC VỤ CHIA NGÀY HỌC DÙNG CHUNG ---
 const WORDS_PER_DAY = 10;       // Mỗi ngày học 10 từ
@@ -1214,6 +1310,7 @@ function KiemTraThuThachViet() {
         xpThiViet += thuongXP;
         diemXP += thuongXP;
         localStorage.setItem('kanji_pure_xp', diemXP);
+        GhiNhanHoatDong('xp', thuongXP);
         document.getElementById('id-xp').textContent = diemXP;
         document.getElementById('writing-xp-preview').textContent = `✓ +${thuongXP} XP`;
         result.className = 'challenge-result correct';
@@ -1249,6 +1346,7 @@ function HoanThanhLuyenViet() {
     if (!daNhanXP) {
         diemXP += 10;
         localStorage.setItem('kanji_pure_xp', diemXP);
+        GhiNhanHoatDong('xp', 10);
         localStorage.setItem(key, '1');
         const xpElement = document.getElementById('id-xp');
         if (xpElement) xpElement.textContent = diemXP;
@@ -1502,6 +1600,8 @@ function HienThiCauHoiTest() {
 function KiemTraKetQuaTest(nutBam, textChon, textDung) {
     if (daBamDapAn || testDaHetGio) return;
     daBamDapAn = true;
+    GhiNhanHoatDong('questions', 1);
+    if (cheDoOnCauSai) GhiNhanHoatDong('reviews', 1);
 
     let tatCaNut = document.querySelectorAll('.nut-option-test');
     tatCaNut.forEach(nut => {
@@ -1556,15 +1656,32 @@ function LaySoCauSai(level = capDoTestChon || 'n5') {
 
 function LuuCauSai(cauHoi, daChon) {
     if (!cauHoi || !['n5', 'n4', 'n2'].includes(capDoTestChon)) return;
-    const khoSai = LaySoCauSai(capDoTestChon).filter(item => item.key !== cauHoi.key);
-    khoSai.unshift({ ...cauHoi, daChon, skill: cauHoi.skill || theLoaiTestChon, savedAt: Date.now() });
+    const khoCu = LaySoCauSai(capDoTestChon);
+    const banCu = khoCu.find(item => item.key === cauHoi.key);
+    const khoSai = khoCu.filter(item => item.key !== cauHoi.key);
+    khoSai.unshift({ ...cauHoi, daChon, skill: cauHoi.skill || theLoaiTestChon, savedAt: Date.now(), reviewStage: 0, mistakeCount: (banCu?.mistakeCount || 0) + 1, nextReviewAt: Date.now() });
     localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai.slice(0, 160)));
 }
 
 function XoaCauKhoiSoSai(key) {
     if (!key) return;
     const khoSai = LaySoCauSai(capDoTestChon);
-    if (khoSai.some(item => item.key === key)) localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai.filter(item => item.key !== key)));
+    const item = khoSai.find(cau => cau.key === key);
+    if (!item) return;
+    if (!cheDoOnCauSai) {
+        localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai.filter(cau => cau.key !== key)));
+        return;
+    }
+    const intervals = [1, 3, 7, 14];
+    const stage = (item.reviewStage || 0) + 1;
+    if (stage > intervals.length) {
+        localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai.filter(cau => cau.key !== key)));
+        return;
+    }
+    item.reviewStage = stage;
+    item.lastReviewedAt = Date.now();
+    item.nextReviewAt = Date.now() + intervals[stage - 1] * 86400000;
+    localStorage.setItem(`${capDoTestChon}_mistake_bank`, JSON.stringify(khoSai));
 }
 
 function LuuKetQuaTest() {
@@ -1579,8 +1696,10 @@ function LuuKetQuaTest() {
 function BatDauOnCauSai(level = 'n5') {
     const khoSai = LaySoCauSai(level);
     if (!khoSai.length) return;
+    const denHan = khoSai.filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now());
+    if (!denHan.length) { alert('Hôm nay chưa có câu sai đến hạn ôn. Hệ thống sẽ nhắc lại đúng lịch ghi nhớ.'); return; }
     capDoTestChon = level; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; cheDoThiThuChuan = false; soCauDungTest = 0;
-    mangCauHoiTest = [...khoSai].sort(() => Math.random() - .5).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
+    mangCauHoiTest = [...denHan].sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0)).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
     indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
 }
 
@@ -1776,6 +1895,7 @@ function CongDiemXP(soDiem) {
     localStorage.setItem('kanji_pure_xp', diemXP);
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
+    GhiNhanHoatDong('xp', soDiem);
 }
 
 // =========================================================================
@@ -1858,6 +1978,7 @@ function TraLoiDocHieu(questionIndex, optionIndex, button) {
         if (index === question.answer) item.classList.add('correct');
     });
     const dung = optionIndex === question.answer;
+    GhiNhanHoatDong('questions', 1);
     if (!dung) button.classList.add('wrong');
     card.querySelector('aside').classList.remove('an-giau');
     if (dung) CongDiemXP(5);
@@ -1903,6 +2024,7 @@ function DongBaiDoc() {
 window.addEventListener('DOMContentLoaded', () => {
     const khungXp = document.getElementById('id-xp');
     if (khungXp) khungXp.innerText = diemXP;
+    CapNhatNhiemVuHomNay();
     const tomTat = document.getElementById('n5-path-summary');
     if (tomTat) {
         const completed = JSON.parse(localStorage.getItem('reading_completed') || '{}');
