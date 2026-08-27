@@ -1795,23 +1795,28 @@ async function BatDauThiThu(level = 'n5') {
             ]);
             const de01 = [...core, ...reading];
             const de02 = [...core02, ...reading02];
-            const de03 = [];
-            Object.entries(DINH_MUC_DE_N2).forEach(([section, quota], sectionIndex) => {
-                const nhom01 = de01.filter(item => item.section === section);
-                const nhom02 = de02.filter(item => item.section === section);
-                const layTuDe01 = sectionIndex % 2 === 0 ? Math.ceil(quota / 2) : Math.floor(quota / 2);
-                de03.push(...nhom01.slice(0, layTuDe01), ...nhom02.slice(layTuDe01, quota));
-            });
+            const taoDeKetHop = soDeKetHop => {
+                const deKetHop = [];
+                Object.entries(DINH_MUC_DE_N2).forEach(([section, quota], sectionIndex) => {
+                    const nhom01 = de01.filter(item => item.section === section);
+                    const nhom02 = de02.filter(item => item.section === section);
+                    for (let viTri = 0; viTri < quota; viTri++) {
+                        const maTran = (viTri * 17 + sectionIndex * 7 + soDeKetHop * 11) % 19;
+                        deKetHop.push(maTran < 9 ? nhom01[viTri] : nhom02[viTri]);
+                    }
+                });
+                return deKetHop;
+            };
             const maDeTruoc = Number(localStorage.getItem('n2_mock_set_last') || 0);
-            const soDe = maDeTruoc % 3 + 1;
+            const soDe = maDeTruoc % 9 + 1;
             localStorage.setItem('n2_mock_set_last', String(soDe));
-            const nganHang = soDe === 1 ? de01 : soDe === 2 ? de02 : de03;
+            const nganHang = soDe === 1 ? de01 : soDe === 2 ? de02 : taoDeKetHop(soDe);
             const deThi = TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N2, 'n2', 1);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = `N2-${String(soDe).padStart(2, '0')}`;
-            document.getElementById('race-message').textContent = `${maDe} · 71 câu / 105 phút · Mã đề tự luân phiên, không phát lại ngay đề vừa làm.`;
+            document.getElementById('race-message').textContent = `${maDe} / 09 · 71 câu / 105 phút · Mã đề tự luân phiên, không phát lại ngay đề vừa làm.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
