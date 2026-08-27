@@ -9,7 +9,7 @@
                initial-scale=1,
                viewport-fit=cover">
     <title>Học tiếng Nhật · JLPT N5–N1</title>
-    <link rel="stylesheet" href="./style.css?v=20260827-focus-timer-v1">
+    <link rel="stylesheet" href="./style.css?v=20260827-daily-profile-v1">
 </head>
 <body>
 
@@ -28,12 +28,41 @@
                     <p>Kanji, ngữ pháp, đọc hiểu và đề luyện được thiết kế thành một lộ trình thống nhất.</p>
                     <button onclick="ChuyenTab('man-study-hub')">Tiếp tục học →</button>
                 </div>
+                <article class="daily-mission-card">
+                    <div class="daily-mission-head">
+                        <button class="learner-chip" onclick="MoHoSoNguoiHoc()"><span id="home-user-avatar">🦊</span><b id="home-user-name">Học viên JLPT</b><small id="home-user-id">JLPT------</small></button>
+                        <div class="streak-chip"><span>🔥</span><b id="daily-streak">0</b><small>ngày liên tục</small></div>
+                    </div>
+                    <div class="daily-title"><span><small>NHIỆM VỤ HÔM NAY</small><strong id="daily-complete-count">0/3 hoàn thành</strong></span><em id="daily-percent">0%</em></div>
+                    <div class="daily-progress"><i id="daily-progress-bar"></i></div>
+                    <div class="daily-mission-list">
+                        <div><span>⚡</span><p><b>Kiếm 30 XP</b><small id="mission-xp-text">0/30 XP</small></p><i id="mission-xp-check">○</i></div>
+                        <div><span>答</span><p><b>Trả lời 10 câu</b><small id="mission-question-text">0/10 câu</small></p><i id="mission-question-check">○</i></div>
+                        <div><span>↻</span><p><b id="mission-review-title">Ôn lại 3 câu sai</b><small id="mission-review-text">0/3 câu</small></p><i id="mission-review-check">○</i></div>
+                    </div>
+                    <button class="daily-start" onclick="ChuyenTab('man-study-hub')">BẮT ĐẦU 10 PHÚT HỌC →</button>
+                </article>
                 <div class="huong-dan-box">
                     <p>⚡ <strong>HỌC KANJI:</strong> Cày từ vựng từ N5 đến N1 kèm timeline âm thanh sinh động.</p>
                     <p>📚 <strong>NGỮ PHÁP:</strong> Trọn gói cấu trúc từ N5 đến N1 chống nản có Furigana trực quan.</p>
                     <p>📖 <strong>ĐỌC HIỂU:</strong> Đọc theo cấp độ, làm câu hỏi và xem giải thích ngay sau bài.</p>
                     <p>⚔️ <strong>PHẦN TEST:</strong> Đấu trường trắc nghiệm tính điểm nâng cao phản xạ.</p>
                 </div>
+            </section>
+
+            <section id="man-profile" class="man-hinh">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">HỒ SƠ NGƯỜI HỌC</span><h2>Danh tính JLPT của bạn</h2></div><button class="nut-quay-lai" onclick="ChuyenTab('man-home')">QUAY LẠI</button></div>
+                <article class="profile-card">
+                    <div id="profile-avatar-preview" class="profile-avatar">🦊</div>
+                    <label>Biệt danh<input id="profile-nickname" maxlength="18" placeholder="Học viên JLPT"></label>
+                    <label>ID học viên<input id="profile-id" readonly></label>
+                    <div class="avatar-picker" aria-label="Chọn avatar">
+                        <button onclick="ChonAvatar('🦊',this)">🦊</button><button onclick="ChonAvatar('🐼',this)">🐼</button><button onclick="ChonAvatar('🐯',this)">🐯</button><button onclick="ChonAvatar('🐧',this)">🐧</button><button onclick="ChonAvatar('🤖',this)">🤖</button><button onclick="ChonAvatar('🥷',this)">🥷</button>
+                    </div>
+                    <label class="privacy-toggle"><input id="profile-public-name" type="checkbox"><span><b>Cho phép hiện biệt danh trên bảng xếp hạng</b><small>Tắt mặc định: sau này bảng xếp hạng chỉ hiện avatar và ID rút gọn.</small></span></label>
+                    <button class="profile-save" onclick="LuuHoSoNguoiHoc()">LƯU HỒ SƠ</button>
+                    <p>Dữ liệu hiện chỉ được lưu trên thiết bị này. App chưa gửi thông tin lên máy chủ.</p>
+                </article>
             </section>
 
             <section id="man-study-hub" class="man-hinh">
@@ -382,6 +411,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260827-focus-timer-v1"></script>
+    <script src="./script.js?v=20260827-daily-profile-v1"></script>
 </body>
 </html>
