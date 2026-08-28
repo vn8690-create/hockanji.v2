@@ -651,6 +651,7 @@ function ChayDongThoiGianFlashcard() {
     // 2️⃣ XỬ LÝ MÀN HÌNH HỌC NGỮ PHÁP
     } else if (loaiHocHienTai === 'grammar') {
         const cauTruc = item.grammar || item.cau_truc || "Chưa có cấu trúc";
+        const kyHieuNguPhap = DinhDangKyHieuNguPhap(cauTruc);
         const nghiaPhap = item.meaning || item.nghia || "Chưa có ý nghĩa";
         const giaiThich = item.explanation || item.giai_thich || "Chưa có giải thích chi tiết";
         
@@ -666,7 +667,8 @@ function ChayDongThoiGianFlashcard() {
             vungChua.innerHTML = `
                 <div class="the-cyber-card" style="min-height: 280px; height: auto; padding-bottom: 20px;">
                     <div class="chu-kanji-khong-lo" style="line-height: 1.3; font-size: 2.2rem; margin-bottom: 15px; padding: 0 10px; word-break: break-all; color: #38bdf8;">
-                        ${cauTruc}
+                        ${kyHieuNguPhap.hienThi}
+                        ${kyHieuNguPhap.chuThich ? `<small style="display:block;margin-top:10px;font-size:.78rem;line-height:1.45;color:#f0abfc;font-weight:700;word-break:normal;">${kyHieuNguPhap.chuThich}</small>` : ''}
                     </div>
                     <div id="step-am-doc" class="khoi-noi-dung" style="margin-bottom: 10px; opacity:0; transition: opacity 0.4s;">
                         <div class="label-am-han" style="color: #00ffcc; font-weight: bold; font-size: 1.3rem; background: rgba(0, 255, 204, 0.1); padding: 6px 12px; display: inline-block; border-radius: 6px;">
@@ -1553,7 +1555,8 @@ function TaoDeTracNghiem(khoGoc) {
                 cauHoi = `Nghĩa tiếng Việt chuẩn xác của từ: <br><span style="font-size:2.8rem; font-weight:bold; color:#00ffcc;">${chuGoc}</span> là gì?`;
                 dapAnDung = (nghiaGoc.includes('(') && nghiaGoc.includes(')')) ? nghiaGoc.substring(nghiaGoc.indexOf('(') + 1, nghiaGoc.indexOf(')')) : nghiaGoc;
             } else {
-                cauHoi = `Cấu trúc ngữ pháp: <br><span style="font-size:2.2rem; font-weight:bold; color:#38bdf8;">${grammarGoc}</span> có nghĩa là gì?`;
+                const kyHieu = DinhDangKyHieuNguPhap(grammarGoc);
+                cauHoi = `Cấu trúc ngữ pháp: <br><span style="font-size:2.2rem; font-weight:bold; color:#38bdf8;">${kyHieu.hienThi}</span>${kyHieu.chuThich ? `<small style="display:block;margin:8px 0;color:#f0abfc;">${kyHieu.chuThich}</small>` : ''} có nghĩa là gì?`;
                 dapAnDung = nghiaGoc;
             }
 
@@ -1946,7 +1949,7 @@ async function BatDauThiThu(level = 'n5') {
         const khoNghia = [...new Set(kanji.map(item => item.meaning))];
         const cauVocab = deKanji.slice(15,30).map(item => ({cauHoiText:`Từ <span style="font-size:2.5rem;font-weight:900;color:#5eead4">${item.kanji}</span> có nghĩa là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(khoNghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`${level}-mock-v-${item.id}`,skill:'tu-vung'}));
         const nghia = grammar.map(x=>x.meaning);
-        const cauGrammar = tron(grammar).slice(0,10).map((item,index) => ({cauHoiText:`Mẫu ngữ pháp <b>${item.grammar}</b> có nghĩa phù hợp nhất là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(nghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`${level}-mock-g-${index}-${item.grammar}`,skill:'ngu-phap'}));
+        const cauGrammar = tron(grammar).slice(0,10).map((item,index) => { const kyHieu=DinhDangKyHieuNguPhap(item.grammar); return {cauHoiText:`Mẫu ngữ pháp <b>${kyHieu.hienThi}</b>${kyHieu.chuThich?`<small style="display:block;color:#f0abfc;">${kyHieu.chuThich}</small>`:''} có nghĩa phù hợp nhất là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(nghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`${level}-mock-g-${index}-${item.grammar}`,skill:'ngu-phap'}; });
         mangCauHoiTest = tron([...cauKanji,...cauVocab,...cauGrammar]); indexTestHienTai=0;
         HienThiCauHoiTest(); BatDauDuongDuaTest(40);
     } catch { document.getElementById('test-cau-hoi-text').textContent = 'Không tải được dữ liệu thi thử. Hãy thử lại.'; }
@@ -2065,6 +2068,33 @@ function MoLoTrinhN4() {
     document.getElementById('n4-mock-status').textContent=mockRate?`Kết quả tích lũy: ${mockRate}%`:'Chưa thi thử';
     document.getElementById('n4-review-button').disabled=!sai;
     ChuyenTab('man-n4-path');
+}
+
+function DinhDangKyHieuNguPhap(cauTruc = '') {
+    let hienThi = String(cauTruc)
+        .replace('～V可能形ようになる', '～V可能形 + ようになる')
+        .replace('～Vる・ないようにする', '～V辞書形・Vない形 + ようにする')
+        .replace('～Vるようになる', '～V辞書形 + ようになる')
+        .replace(/V-る/g, 'V辞書形')
+        .replace(/V-ない/g, 'Vない形')
+        .replace(/V-た/g, 'Vた形')
+        .replace(/V-て/g, 'Vて形')
+        .replace(/～Ｖ受身（うけみ）/g, '～V受身形')
+        .replace(/~V使役受身（しえきうけみ）/g, '～V使役受身形')
+        .replace(/~V使役（しえき）/g, '～V使役形')
+        .replace(/V禁止（きんし）/g, 'V禁止形');
+    const chuThich = [
+        ['V辞書形', 'động từ thể từ điển'],
+        ['Vない形', 'động từ thể ない'],
+        ['Vた形', 'động từ thể た'],
+        ['Vて形', 'động từ thể て'],
+        ['V可能形', 'động từ thể khả năng'],
+        ['V受身形', 'động từ thể bị động'],
+        ['V使役受身形', 'động từ thể sai khiến bị động'],
+        ['V使役形', 'động từ thể sai khiến'],
+        ['V禁止形', 'động từ thể cấm đoán']
+    ].filter(([kyHieu]) => hienThi.includes(kyHieu));
+    return {hienThi, chuThich:chuThich.map(([kyHieu,nghia]) => `${kyHieu}（${nghia}）`).join(' · ')};
 }
 
 function CongDiemXP(soDiem) {
