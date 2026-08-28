@@ -1,0 +1,8 @@
+[
+  {"rotation":"R01","reference":"12/2017","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
+  {"rotation":"R02","reference":"07/2018","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
+  {"rotation":"R03","reference":"07/2019","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
+  {"rotation":"R04","reference":"07/2021","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
+  {"rotation":"R05","reference":"07/2022","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
+  {"rotation":"R06","reference":"12/2022","questions":74,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"}
+]
