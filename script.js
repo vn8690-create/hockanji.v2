@@ -1831,15 +1831,16 @@ async function BatDauThiThu(level = 'n5') {
             return;
         }
         if (level === 'n4') {
-            const [bankResponse, bank02Response, bank03Response, reading04Response, kanjiResponse] = await Promise.all([
+            const [bankResponse, bank02Response, bank03Response, reading04Response, reading0506Response, kanjiResponse] = await Promise.all([
                 fetch('./n4_mock_official_bank.json?v=1'),
                 fetch('./n4_mock_set02_bank.json?v=1'),
                 fetch('./n4_mock_set03_bank.json?v=1'),
                 fetch('./n4_mock_reading_expansion04.json?v=1'),
+                fetch('./n4_mock_reading_r05_r06.json?v=1'),
                 fetch('./n4_quiz.json?v=6')
             ]);
-            if (!bankResponse.ok || !bank02Response.ok || !bank03Response.ok || !reading04Response.ok || !kanjiResponse.ok) throw new Error('data');
-            const bank = [...await bankResponse.json(), ...await bank02Response.json(), ...await bank03Response.json(), ...await reading04Response.json()];
+            if (!bankResponse.ok || !bank02Response.ok || !bank03Response.ok || !reading04Response.ok || !reading0506Response.ok || !kanjiResponse.ok) throw new Error('data');
+            const bank = [...await bankResponse.json(), ...await bank02Response.json(), ...await bank03Response.json(), ...await reading04Response.json(), ...await reading0506Response.json()];
             const kanji = await kanjiResponse.json();
             const readingPool = kanji.map(item => {
                 const options = item.options?.length === 4 ? [...item.options] : TaoLuaChonKana(item.correct);
@@ -1853,7 +1854,11 @@ async function BatDauThiThu(level = 'n5') {
                     explanation:`${item.kanji} đọc là ${item.correct}（${item.meaning}）。`
                 };
             });
+            const vongTruoc = Number(localStorage.getItem('n4_mock_rotation_last') || 0);
+            const vongDe = vongTruoc % 5 + 1;
+            localStorage.setItem('n4_mock_rotation_last',String(vongDe));
             const deThi = TaoDeTheoDinhMuc([...readingPool, ...bank], DINH_MUC_DE_N4, 'n4', 7);
+            localStorage.setItem('n4_last_exam_code',`N4-R${String(vongDe).padStart(2,'0')}`);
             cheDoThiThuChuan = true;
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n4-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 80*60);
