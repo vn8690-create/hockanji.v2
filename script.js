@@ -1798,6 +1798,11 @@ async function BatDauThiThu(level = 'n5') {
             const taoDeKetHop = soDeKetHop => {
                 const deKetHop = [];
                 Object.entries(DINH_MUC_DE_N2).forEach(([section, quota], sectionIndex) => {
+                    if (section.startsWith('読解')) {
+                        const boDocNguyenVen = soDeKetHop % 2 === 0 ? reading02 : reading;
+                        deKetHop.push(...boDocNguyenVen.filter(item => item.section === section));
+                        return;
+                    }
                     const nhom01 = de01.filter(item => item.section === section);
                     const nhom02 = de02.filter(item => item.section === section);
                     for (let viTri = 0; viTri < quota; viTri++) {
@@ -1816,7 +1821,8 @@ async function BatDauThiThu(level = 'n5') {
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = `N2-${String(soDe).padStart(2, '0')}`;
-            document.getElementById('race-message').textContent = `${maDe} / 09 · 71 câu / 105 phút · Mã đề tự luân phiên, không phát lại ngay đề vừa làm.`;
+            const maKhoDoc = soDe === 1 || soDe % 2 === 1 ? 'R01' : 'R02';
+            document.getElementById('race-message').textContent = `${maDe} / 09 · Kho đọc ${maKhoDoc} nguyên bộ · 71 câu / 105 phút.`;
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
