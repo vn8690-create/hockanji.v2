@@ -73,6 +73,7 @@
                 <button class="n5-path-banner n4-path-banner" onclick="MoLoTrinhN4()"><span class="path-badge">N4</span><span><small>LỘ TRÌNH TIẾP THEO</small><b>Kanji mở rộng → Ngữ pháp → Đọc hiểu</b><em id="n4-path-summary">Bắt đầu hành trình N4</em></span><strong>→</strong></button>
                 <div class="study-grid">
                     <button class="study-card kanji-card" onclick="ChuyenTab('man-kanji')"><span>漢</span><div><small>TỪ VỰNG & VIẾT</small><h3>Kanji</h3><p>Flashcard, phát âm và luyện viết tay.</p></div><b>→</b></button>
+                    <button class="study-card vocab-card" onclick="MoKhoTuVungN2()"><span>語</span><div><small>文字・語彙 N2</small><h3>Từ vựng</h3><p>120 từ theo chủ đề, ví dụ và kiểm tra nhanh.</p></div><b>→</b></button>
                     <button class="study-card grammar-card" onclick="ChuyenTab('man-grammar-levels')"><span>文</span><div><small>MẪU CÂU</small><h3>Ngữ pháp</h3><p>Cấu trúc, ví dụ và furigana trực quan.</p></div><b>→</b></button>
                     <button class="study-card reading-card" onclick="MoCapDoDocHieu()"><span>読</span><div><small>LUYỆN ĐỌC</small><h3>Đọc hiểu</h3><p>Bài đọc ngắn, câu hỏi và giải thích.</p></div><b>→</b></button>
                     <button class="study-card writing-test-card" onclick="MoManThiViet()"><span>書</span><div><small>CHẤM ĐIỂM NÉT</small><h3>Thi viết Kanji</h3><p>Viết từ trí nhớ, nhận điểm 0–100.</p></div><b>→</b></button>
@@ -105,6 +106,39 @@
                     <article class="path-stage mock-stage"><span>05</span><div><small>129 CÂU・3 BỘ ĐỀ GỐC</small><h3>Thi thử N5 chuẩn JLPT</h3><p>Mỗi lượt tạo mã đề mới, khóa đúng 43 câu/10 Mondai/105 phút và ưu tiên câu chưa gặp gần đây.</p><em id="n5-mock-status">Chưa thi thử</em></div><button onclick="BatDauThiThu('n5')">Tạo đề mới</button></article>
                 </div>
                 <p class="readiness-disclaimer">Điểm sẵn sàng là chỉ báo luyện tập trong app, không phải cam kết kết quả kỳ thi chính thức.</p>
+            </section>
+
+            <section id="man-n2-vocab" class="man-hinh n2-vocab-screen">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">文字・語彙・N2</span><h2>Kho từ vựng N2</h2></div><button class="nut-quay-lai" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
+                <article class="vocab-overview">
+                    <div class="vocab-progress-ring" id="n2-vocab-progress-ring"><strong id="n2-vocab-mastered">0</strong><small>/120 đã nhớ</small></div>
+                    <div><small>HỌC THEO NGỮ CẢNH</small><h3>12 buổi × 10 từ cốt lõi</h3><p>Cách đọc, âm Hán Việt, nghĩa, câu ví dụ, từ gần nghĩa và cụm từ thường đi cùng.</p><div class="vocab-progress"><i id="n2-vocab-progress-bar"></i></div></div>
+                </article>
+                <div class="vocab-actions">
+                    <button onclick="Hoc10TuTiepTheo()">▶ Học 10 từ tiếp theo</button>
+                    <button onclick="BatDauKiemTraTuVungN2()">⚡ Kiểm tra nhanh</button>
+                    <button class="secondary" onclick="LocTuVungChuaNho()">↻ Ôn từ chưa nhớ</button>
+                </div>
+                <div class="vocab-controls">
+                    <label><span>Tìm từ</span><input id="n2-vocab-search" type="search" placeholder="Kanji, kana hoặc nghĩa Việt…" oninput="HienThiKhoTuVungN2()"></label>
+                    <label><span>Chủ đề</span><select id="n2-vocab-topic" onchange="HienThiKhoTuVungN2()"><option value="all">Tất cả chủ đề</option></select></label>
+                    <label><span>Trạng thái</span><select id="n2-vocab-status" onchange="HienThiKhoTuVungN2()"><option value="all">Tất cả</option><option value="new">Chưa nhớ</option><option value="mastered">Đã nhớ</option></select></label>
+                </div>
+                <div class="vocab-list-meta"><span id="n2-vocab-result-count">Đang tải dữ liệu…</span><button onclick="DatLaiBoLocTuVung()">Xóa bộ lọc</button></div>
+                <div id="n2-vocab-list" class="n2-vocab-list"><div class="reading-loading">Đang mở kho 文字・語彙 N2…</div></div>
+            </section>
+
+            <section id="man-n2-vocab-quiz" class="man-hinh n2-vocab-quiz-screen">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">文字・語彙・10問</span><h2>Kiểm tra nhanh N2</h2></div><button class="nut-quay-lai" onclick="KetThucKiemTraTuVungN2()">THOÁT</button></div>
+                <article class="vocab-quiz-card">
+                    <div class="vocab-quiz-head"><span id="n2-vocab-quiz-type">CÁCH ĐỌC</span><b id="n2-vocab-quiz-count">1/10</b></div>
+                    <div class="vocab-progress"><i id="n2-vocab-quiz-progress"></i></div>
+                    <p id="n2-vocab-quiz-prompt">Chọn đáp án đúng</p>
+                    <h3 id="n2-vocab-quiz-word">改善</h3>
+                    <div id="n2-vocab-quiz-options" class="vocab-quiz-options"></div>
+                    <aside id="n2-vocab-quiz-explanation" class="an-giau"></aside>
+                    <button id="n2-vocab-quiz-next" class="an-giau" onclick="CauTuVungTiepTheo()">CÂU TIẾP THEO →</button>
+                </article>
             </section>
 
             <section id="man-writing-test-levels" class="man-hinh">
@@ -411,6 +445,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260827-daily-profile-v1"></script>
+    <script src="./script.js?v=20260828-n2-mojigoi-v1"></script>
 </body>
 </html>
