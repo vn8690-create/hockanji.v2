@@ -114,5 +114,5 @@ const info='【市民センター秋の講座】<br>A 写真整理：9/7（土�
 radd('r14','r14-01',info,'高校生のリーさんは、PCを持っていない。土曜日の午後に参加できる講座はどれか。',['A','B','C','D'],2,'土曜午後・高校生可・道具貸出ありはC。');
 radd('r14','r14-02',info,'PCを借りてDに参加したい人は、特に何をしなければならないか。',['9月8日までに申し込み、貸出希望を記入する','当日にPCを持参する','開催3日前にだけ申し込む','中学生であることを証明する'],0,'7日前締切で、貸出希望は申込時に記入。');
 
-fs.writeFileSync('n2_mock_set02_reading.json', `${JSON.stringify(reading, null, 2)}\n`);
-console.log(`built ${rows.length} core + ${reading.length} reading questions`);
+fs.writeFileSync('n2_mock_set02_reading_legacy.json', `${JSON.stringify(reading, null, 2)}\n`);
+console.log(`built ${rows.length} core questions; legacy reading saved separately. Use build_n2_reading_r02.mjs for the production R02 pack.`);
