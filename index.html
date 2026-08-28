@@ -85,10 +85,11 @@
                 <article class="readiness-card n4-readiness"><div class="readiness-ring" id="n4-readiness-ring"><strong id="n4-readiness-score">0</strong><small>%</small></div><div><small>MỨC SẴN SÀNG N4</small><h3 id="n4-readiness-title">Bắt đầu xây nền N4</h3><p id="n4-readiness-note">Học đúng thứ tự để không bị ngợp bởi Kanji và mẫu câu mới.</p></div></article>
                 <div class="n5-path-list">
                     <article class="path-stage"><span>01</span><div><small>TẠO ĐÀ BẰNG HÁN VIỆT</small><h3>186 Kanji N4</h3><p>Học âm Hán Việt, On/Kun và từ ghép trước khi luyện cách đọc.</p><div class="stage-progress"><i id="n4-kanji-bar"></i></div><em id="n4-kanji-status">Chưa bắt đầu</em></div><button onclick="MoChonNgay('n4')">Học Kanji</button></article>
-                    <article class="path-stage"><span>02</span><div><small>DỰNG KHUNG CÂU</small><h3>63 mẫu ngữ pháp cốt lõi</h3><p>Học ý nghĩa, cách nối và ví dụ trước khi làm bài kiểm tra.</p><div class="stage-progress"><i id="n4-grammar-bar"></i></div><em id="n4-grammar-status">Chưa có kết quả</em></div><button onclick="TaiDuLieuHoc('grammar','n4_grammar')">Học ngữ pháp</button></article>
-                    <article class="path-stage"><span>03</span><div><small>ĐỌC HIỂU ỨNG DỤNG</small><h3>Đời sống, thư từ và thông báo</h3><p>Đọc dài hơn N5 nhưng vẫn giới hạn trong nền kiến thức N4.</p><div class="stage-progress"><i id="n4-reading-bar"></i></div><em id="n4-reading-status">0 bài hoàn thành</em></div><button onclick="TaiDanhSachBaiDoc('n4')">Luyện đọc</button></article>
-                    <article class="path-stage review-stage"><span>04</span><div><small>KHẮC PHỤC ĐIỂM YẾU</small><h3>Sửa câu sai N4</h3><p>Câu sai được gom riêng, trả lời đúng lại mới được xóa.</p><em id="n4-mistake-status">Chưa có câu cần ôn</em></div><button id="n4-review-button" onclick="BatDauOnCauSai('n4')">Ôn câu sai</button></article>
-                    <article class="path-stage mock-stage"><span>05</span><div><small>57 CÂU・11 MONDAI・KHÔNG NGHE</small><h3>Thi thử N4 chuẩn cấu trúc JLPT</h3><p>Đã cân chỉnh theo đề 7/2023: 28 câu Từ vựng và 29 câu Ngữ pháp/Đọc hiểu, gồm 2 câu 情報検索.</p><em id="n4-mock-status">Chưa thi thử</em></div><button onclick="BatDauThiThu('n4')">Tạo đề N4</button></article>
+                    <article class="path-stage"><span>02</span><div><small>文字・語彙</small><h3>Kho từ vựng N4 theo ngữ cảnh</h3><p>Học cách đọc cả từ, nghĩa, câu ví dụ và kiểm tra nhanh theo dạng JLPT.</p><div class="stage-progress"><i id="n4-vocab-bar"></i></div><em id="n4-vocab-status">Chưa bắt đầu</em></div><button onclick="MoKhoTuVungJLPT('n4')">Học từ vựng</button></article>
+                    <article class="path-stage"><span>03</span><div><small>DỰNG KHUNG CÂU</small><h3>63 mẫu ngữ pháp cốt lõi</h3><p>Học ý nghĩa, cách nối và ví dụ trước khi làm bài kiểm tra.</p><div class="stage-progress"><i id="n4-grammar-bar"></i></div><em id="n4-grammar-status">Chưa có kết quả</em></div><button onclick="TaiDuLieuHoc('grammar','n4_grammar')">Học ngữ pháp</button></article>
+                    <article class="path-stage"><span>04</span><div><small>ĐỌC HIỂU ỨNG DỤNG</small><h3>Đời sống, thư từ và thông báo</h3><p>Đọc dài hơn N5 nhưng vẫn giới hạn trong nền kiến thức N4.</p><div class="stage-progress"><i id="n4-reading-bar"></i></div><em id="n4-reading-status">0 bài hoàn thành</em></div><button onclick="TaiDanhSachBaiDoc('n4')">Luyện đọc</button></article>
+                    <article class="path-stage review-stage"><span>05</span><div><small>KHẮC PHỤC ĐIỂM YẾU</small><h3>Sửa câu sai N4</h3><p>Câu sai được gom riêng, trả lời đúng lại mới được xóa.</p><em id="n4-mistake-status">Chưa có câu cần ôn</em></div><button id="n4-review-button" onclick="BatDauOnCauSai('n4')">Ôn câu sai</button></article>
+                    <article class="path-stage mock-stage"><span>06</span><div><small>57 CÂU・11 MONDAI・KHÔNG NGHE</small><h3>Thi thử N4 chuẩn cấu trúc JLPT</h3><p>Đã cân chỉnh theo đề 7/2023: 28 câu Từ vựng và 29 câu Ngữ pháp/Đọc hiểu, gồm 2 câu 情報検索.</p><em id="n4-mock-status">Chưa thi thử</em></div><button onclick="BatDauThiThu('n4')">Tạo đề N4</button></article>
                 </div><p class="readiness-disclaimer">Điểm sẵn sàng là chỉ báo luyện tập trong app, không thay thế kết quả JLPT chính thức.</p>
             </section>
 
@@ -109,9 +110,9 @@
             </section>
 
             <section id="man-n2-vocab" class="man-hinh n2-vocab-screen">
-                <div class="thanh-dieu-huong"><div><span class="eyebrow">文字・語彙・N2</span><h2>Kho từ vựng N2</h2></div><button class="nut-quay-lai" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
+                <div class="thanh-dieu-huong"><div><span class="eyebrow" id="vocab-level-eyebrow">文字・語彙・N2</span><h2 id="vocab-level-title">Kho từ vựng N2</h2></div><button class="nut-quay-lai" id="vocab-back-button" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
                 <article class="vocab-overview">
-                    <div class="vocab-progress-ring" id="n2-vocab-progress-ring"><strong id="n2-vocab-mastered">0</strong><small>/120 đã nhớ</small></div>
+                    <div class="vocab-progress-ring" id="n2-vocab-progress-ring"><strong id="n2-vocab-mastered">0</strong><small id="vocab-total-label">/120 đã nhớ</small></div>
                     <div><small>HỌC THEO NGỮ CẢNH</small><h3>12 buổi × 10 từ cốt lõi</h3><p>Cách đọc, âm Hán Việt, nghĩa, câu ví dụ, từ gần nghĩa và cụm từ thường đi cùng.</p><div class="vocab-progress"><i id="n2-vocab-progress-bar"></i></div></div>
                 </article>
                 <div class="vocab-actions">
@@ -445,6 +446,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260828-kanji-reading-v2"></script>
+    <script src="./script.js?v=20260828-n4-moji-goi-v1"></script>
 </body>
 </html>
