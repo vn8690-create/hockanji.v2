@@ -1787,7 +1787,7 @@ async function BatDauThiThu(level = 'n5') {
                 fetch('./n2_mock_verified_core.json?v=4'),
                 fetch('./n2_mock_beta_reading.json?v=5'),
                 fetch('./n2_mock_set02_core.json?v=1'),
-                fetch('./n2_mock_set02_reading.json?v=1')
+                fetch('./n2_mock_set02_reading.json?v=2')
             ]);
             if (!coreResponse.ok || !readingResponse.ok || !core02Response.ok || !reading02Response.ok) throw new Error('data');
             const [core, reading, core02, reading02] = await Promise.all([
