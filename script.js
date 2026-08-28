@@ -101,6 +101,14 @@ let readingLesson = null;
 let readingAnswered = new Set();
 let avatarDangChon = '🦊';
 
+// Kho 文字・語彙 N2 được tải riêng khi người học mở, không làm nặng trang đầu.
+let n2VocabData = [];
+let n2VocabSessionIds = null;
+let n2VocabQuiz = [];
+let n2VocabQuizIndex = 0;
+let n2VocabQuizScore = 0;
+let n2VocabQuizAnswered = false;
+
 function KhoaNgayHienTai(date = new Date()) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
@@ -288,7 +296,7 @@ function ChuyenTab(idManHinh) {
 
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
     if (idManHinh === 'man-home') document.getElementById('btn-nav-home')?.classList.add('active');
-    if (['man-study-hub', 'man-n5-path', 'man-n4-path', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet', 'man-writing-test-levels', 'man-writing-results'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
+    if (['man-study-hub', 'man-n5-path', 'man-n4-path', 'man-kanji', 'man-grammar-levels', 'man-hinh-chon-ngay', 'man-hoc-chi-tiet', 'man-luyen-viet', 'man-writing-test-levels', 'man-writing-results', 'man-n2-vocab', 'man-n2-vocab-quiz'].includes(idManHinh)) document.getElementById('btn-nav-study')?.classList.add('active');
     if (idManHinh === 'man-test-levels') document.getElementById('btn-nav-test')?.classList.add('active');
     if (['man-reading-levels', 'man-reading-lessons', 'man-reading-detail'].includes(idManHinh)) document.getElementById('btn-nav-reading')?.classList.add('active');
 }
@@ -1971,6 +1979,218 @@ function CongDiemXP(soDiem) {
     if (khungXp) khungXp.innerText = diemXP;
     GhiNhanHoatDong('xp', soDiem);
 }
+
+// =========================================================================
+// 文字・語彙 N2 - học theo chủ đề, nghe, đánh dấu nhớ và kiểm tra nhanh
+// =========================================================================
+function LayTienDoTuVungN2() {
+    try { return new Set(JSON.parse(localStorage.getItem('n2_vocab_mastered') || '[]')); }
+    catch { return new Set(); }
+}
+
+function LuuTienDoTuVungN2(tapDaNho) {
+    localStorage.setItem('n2_vocab_mastered', JSON.stringify([...tapDaNho]));
+    CapNhatTongQuanTuVungN2();
+}
+
+function EscapeHtml(value = '') {
+    return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
+
+async function MoKhoTuVungN2() {
+    ChuyenTab('man-n2-vocab');
+    if (n2VocabData.length) { HienThiKhoTuVungN2(); return; }
+    try {
+        const response = await fetch('./n2_moji_goi.json?v=1');
+        if (!response.ok) throw new Error('Không tải được kho từ vựng');
+        n2VocabData = await response.json();
+        const select = document.getElementById('n2-vocab-topic');
+        const topics = [...new Map(n2VocabData.map(item => [item.topicId, item.topic])).entries()];
+        select.innerHTML = '<option value="all">Tất cả chủ đề</option>' + topics.map(([id,name]) => `<option value="${EscapeHtml(id)}">${EscapeHtml(name)}</option>`).join('');
+        HienThiKhoTuVungN2();
+    } catch {
+        document.getElementById('n2-vocab-list').innerHTML = '<div class="reading-error">Không tải được kho 文字・語彙 N2. Hãy tải lại trang và thử lại.</div>';
+    }
+}
+
+function CapNhatTongQuanTuVungN2() {
+    const mastered = LayTienDoTuVungN2();
+    const total = n2VocabData.length || 120;
+    const count = n2VocabData.length ? n2VocabData.filter(item => mastered.has(item.id)).length : mastered.size;
+    const percent = Math.min(100, Math.round(count / total * 100));
+    const number = document.getElementById('n2-vocab-mastered');
+    const ring = document.getElementById('n2-vocab-progress-ring');
+    const bar = document.getElementById('n2-vocab-progress-bar');
+    if (number) number.textContent = count;
+    if (ring) ring.style.setProperty('--vocab-progress', `${percent * 3.6}deg`);
+    if (bar) bar.style.width = `${percent}%`;
+}
+
+function LayDanhSachTuVungDangLoc() {
+    const query = (document.getElementById('n2-vocab-search')?.value || '').trim().toLowerCase();
+    const topic = document.getElementById('n2-vocab-topic')?.value || 'all';
+    const status = document.getElementById('n2-vocab-status')?.value || 'all';
+    const mastered = LayTienDoTuVungN2();
+    return n2VocabData.filter(item => {
+        if (n2VocabSessionIds && !n2VocabSessionIds.has(item.id)) return false;
+        if (topic !== 'all' && item.topicId !== topic) return false;
+        if (status === 'new' && mastered.has(item.id)) return false;
+        if (status === 'mastered' && !mastered.has(item.id)) return false;
+        if (!query) return true;
+        return [item.word,item.reading,item.hanViet,item.meaning,item.topic,item.example].join(' ').toLowerCase().includes(query);
+    });
+}
+
+function HienThiKhoTuVungN2() {
+    if (!n2VocabData.length) return;
+    const list = LayDanhSachTuVungDangLoc();
+    const mastered = LayTienDoTuVungN2();
+    document.getElementById('n2-vocab-result-count').textContent = `${list.length}/${n2VocabData.length} từ${n2VocabSessionIds ? ' trong buổi học' : ''}`;
+    document.getElementById('n2-vocab-list').innerHTML = list.length ? list.map(item => {
+        const done = mastered.has(item.id);
+        return `<article class="vocab-item ${done ? 'mastered' : ''}" id="vocab-${EscapeHtml(item.id)}">
+            <button class="vocab-main" onclick="MoChiTietTuVung('${EscapeHtml(item.id)}')">
+                <span class="vocab-word"><b>${EscapeHtml(item.word)}</b><small>${EscapeHtml(item.reading)}</small></span>
+                <span class="vocab-meaning"><small>${EscapeHtml(item.hanViet || item.pos)}</small><strong>${EscapeHtml(item.meaning)}</strong><em>${EscapeHtml(item.topic)}</em></span>
+                <i>${done ? '✓' : '＋'}</i>
+            </button>
+            <div class="vocab-detail an-giau">
+                <p class="vocab-example"><b>${EscapeHtml(item.example)}</b><span>${EscapeHtml(item.translation)}</span></p>
+                <div class="vocab-relations"><span><small>TỪ LOẠI</small>${EscapeHtml(item.pos)}</span><span><small>CỤM HAY GẶP</small>${EscapeHtml(item.collocation)}</span>${item.synonym ? `<span><small>GẦN NGHĨA</small>${EscapeHtml(item.synonym)}</span>` : ''}${item.contrast ? `<span><small>DỄ PHÂN BIỆT</small>${EscapeHtml(item.contrast)}</span>` : ''}</div>
+                <div class="vocab-item-actions"><button onclick="DocTuVungN2('${EscapeHtml(item.id)}')">🔊 Nghe từ & ví dụ</button><button class="remember ${done ? 'active' : ''}" onclick="DanhDauNhoTuVung('${EscapeHtml(item.id)}')">${done ? '✓ Đã nhớ' : '○ Đánh dấu đã nhớ'}</button></div>
+            </div>
+        </article>`;
+    }).join('') : '<div class="vocab-empty">Không có từ nào khớp bộ lọc này.</div>';
+    CapNhatTongQuanTuVungN2();
+}
+
+function MoChiTietTuVung(id) {
+    document.querySelector(`#vocab-${CSS.escape(id)} .vocab-detail`)?.classList.toggle('an-giau');
+}
+
+function DanhDauNhoTuVung(id) {
+    const mastered = LayTienDoTuVungN2();
+    if (mastered.has(id)) mastered.delete(id); else { mastered.add(id); CongDiemXP(2); }
+    LuuTienDoTuVungN2(mastered);
+    HienThiKhoTuVungN2();
+}
+
+function DocTuVungN2(id) {
+    const item = n2VocabData.find(word => word.id === id);
+    if (!item || !('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(`${item.word}。${item.example}`);
+    utterance.lang = 'ja-JP'; utterance.rate = .82;
+    speechSynthesis.speak(utterance);
+}
+
+function Hoc10TuTiepTheo() {
+    const mastered = LayTienDoTuVungN2();
+    const start = n2VocabData.findIndex(item => !mastered.has(item.id));
+    const ordered = start < 0 ? n2VocabData : [...n2VocabData.slice(start), ...n2VocabData.slice(0,start)];
+    n2VocabSessionIds = new Set(ordered.slice(0,10).map(item => item.id));
+    document.getElementById('n2-vocab-search').value = '';
+    document.getElementById('n2-vocab-topic').value = 'all';
+    document.getElementById('n2-vocab-status').value = 'all';
+    HienThiKhoTuVungN2();
+    document.querySelector('.n2-vocab-list')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function LocTuVungChuaNho() {
+    n2VocabSessionIds = null;
+    document.getElementById('n2-vocab-status').value = 'new';
+    HienThiKhoTuVungN2();
+}
+
+function DatLaiBoLocTuVung() {
+    n2VocabSessionIds = null;
+    document.getElementById('n2-vocab-search').value = '';
+    document.getElementById('n2-vocab-topic').value = 'all';
+    document.getElementById('n2-vocab-status').value = 'all';
+    HienThiKhoTuVungN2();
+}
+
+function TronMang(mang) { return [...mang].sort(() => Math.random() - .5); }
+
+function TaoBonLuaChon(dapAn, ungVien) {
+    const khac = [...new Set(ungVien)].filter(value => value && value !== dapAn);
+    return TronMang([dapAn, ...TronMang(khac).slice(0,3)]);
+}
+
+function TaoCauHoiTuVung(item, index) {
+    const type = ['reading','meaning','context'][index % 3];
+    const sameTopic = n2VocabData.filter(word => word.id !== item.id && word.topicId === item.topicId);
+    if (type === 'reading') {
+        const options = TaoBonLuaChon(item.reading,n2VocabData.filter(word => word.id !== item.id).map(word => word.reading));
+        return {item,type,label:'CÁCH ĐỌC',prompt:'Chọn cách đọc đúng',word:item.word,options,answer:options.indexOf(item.reading)};
+    }
+    if (type === 'meaning') {
+        const options = TaoBonLuaChon(item.meaning,sameTopic.map(word => word.meaning));
+        return {item,type,label:'Ý NGHĨA',prompt:'Chọn nghĩa phù hợp nhất',word:`${item.word}（${item.reading}）`,options,answer:options.indexOf(item.meaning)};
+    }
+    const options = TaoBonLuaChon(item.word,sameTopic.map(word => word.word));
+    return {item,type,label:'NGỮ CẢNH',prompt:item.example.replace(item.word,'（　）'),word:'Điền từ thích hợp vào câu',options,answer:options.indexOf(item.word)};
+}
+
+function BatDauKiemTraTuVungN2() {
+    if (!n2VocabData.length) return;
+    const mastered = LayTienDoTuVungN2();
+    const uuTien = [...n2VocabData.filter(item => !mastered.has(item.id)), ...n2VocabData.filter(item => mastered.has(item.id))];
+    const chosen = TronMang(uuTien.slice(0,Math.max(30,uuTien.length))).slice(0,10);
+    n2VocabQuiz = chosen.map(TaoCauHoiTuVung);
+    n2VocabQuizIndex = 0; n2VocabQuizScore = 0; n2VocabQuizAnswered = false;
+    ChuyenTab('man-n2-vocab-quiz'); HienThiCauHoiTuVungN2();
+}
+
+function HienThiCauHoiTuVungN2() {
+    const q = n2VocabQuiz[n2VocabQuizIndex]; if (!q) return;
+    n2VocabQuizAnswered = false;
+    document.getElementById('n2-vocab-quiz-type').textContent = q.label;
+    document.getElementById('n2-vocab-quiz-count').textContent = `${n2VocabQuizIndex + 1}/${n2VocabQuiz.length}`;
+    document.getElementById('n2-vocab-quiz-progress').style.width = `${n2VocabQuizIndex / n2VocabQuiz.length * 100}%`;
+    document.getElementById('n2-vocab-quiz-prompt').textContent = q.prompt;
+    document.getElementById('n2-vocab-quiz-word').textContent = q.word;
+    document.getElementById('n2-vocab-quiz-options').innerHTML = q.options.map((option,index) => `<button onclick="TraLoiKiemTraTuVung(${index},this)">${EscapeHtml(option)}</button>`).join('');
+    document.getElementById('n2-vocab-quiz-explanation').classList.add('an-giau');
+    document.getElementById('n2-vocab-quiz-next').classList.add('an-giau');
+}
+
+function TraLoiKiemTraTuVung(optionIndex, button) {
+    if (n2VocabQuizAnswered) return;
+    n2VocabQuizAnswered = true;
+    const q = n2VocabQuiz[n2VocabQuizIndex];
+    const buttons = [...document.querySelectorAll('#n2-vocab-quiz-options button')];
+    buttons.forEach((item,index) => { item.disabled = true; if (index === q.answer) item.classList.add('correct'); });
+    const correct = optionIndex === q.answer;
+    if (correct) { n2VocabQuizScore++; button.classList.add('correct'); CongDiemXP(3); }
+    else {
+        button.classList.add('wrong');
+        const wrong = new Set(JSON.parse(localStorage.getItem('n2_vocab_wrong') || '[]')); wrong.add(q.item.id);
+        localStorage.setItem('n2_vocab_wrong',JSON.stringify([...wrong]));
+    }
+    const aside = document.getElementById('n2-vocab-quiz-explanation');
+    aside.innerHTML = `<b>${correct ? 'Chính xác!' : 'Chưa đúng.'}</b> ${EscapeHtml(q.item.word)}（${EscapeHtml(q.item.reading)}）— ${EscapeHtml(q.item.meaning)}<br>${EscapeHtml(q.item.example)}<br><span>${EscapeHtml(q.item.translation)}</span>`;
+    aside.classList.remove('an-giau');
+    const next = document.getElementById('n2-vocab-quiz-next'); next.textContent = n2VocabQuizIndex === n2VocabQuiz.length - 1 ? 'XEM KẾT QUẢ →' : 'CÂU TIẾP THEO →'; next.classList.remove('an-giau');
+}
+
+function CauTuVungTiepTheo() {
+    if (!n2VocabQuizAnswered) return;
+    if (++n2VocabQuizIndex < n2VocabQuiz.length) { HienThiCauHoiTuVungN2(); return; }
+    const card = document.querySelector('.vocab-quiz-card');
+    document.getElementById('n2-vocab-quiz-progress').style.width = '100%';
+    document.getElementById('n2-vocab-quiz-type').textContent = 'HOÀN THÀNH';
+    document.getElementById('n2-vocab-quiz-count').textContent = `${n2VocabQuizScore}/10`;
+    document.getElementById('n2-vocab-quiz-prompt').textContent = 'Kết quả kiểm tra nhanh';
+    document.getElementById('n2-vocab-quiz-word').textContent = `${n2VocabQuizScore * 10}%`;
+    document.getElementById('n2-vocab-quiz-options').innerHTML = `<button onclick="BatDauKiemTraTuVungN2()">LÀM BỘ 10 CÂU MỚI</button><button onclick="KetThucKiemTraTuVungN2()">VỀ KHO TỪ VỰNG</button>`;
+    document.getElementById('n2-vocab-quiz-explanation').classList.add('an-giau');
+    document.getElementById('n2-vocab-quiz-next').classList.add('an-giau');
+    localStorage.setItem('n2_vocab_quiz_last',JSON.stringify({score:n2VocabQuizScore,total:10,at:Date.now()}));
+    card?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function KetThucKiemTraTuVungN2() { ChuyenTab('man-n2-vocab'); HienThiKhoTuVungN2(); }
 
 // =========================================================================
 // ĐỌC HIỂU JLPT - tải dữ liệu theo level, lưu tiến độ trên thiết bị
