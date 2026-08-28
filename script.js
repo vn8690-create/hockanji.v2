@@ -1831,13 +1831,14 @@ async function BatDauThiThu(level = 'n5') {
             return;
         }
         if (level === 'n4') {
-            const [bankResponse, bank02Response, kanjiResponse] = await Promise.all([
+            const [bankResponse, bank02Response, bank03Response, kanjiResponse] = await Promise.all([
                 fetch('./n4_mock_official_bank.json?v=1'),
                 fetch('./n4_mock_set02_bank.json?v=1'),
+                fetch('./n4_mock_set03_bank.json?v=1'),
                 fetch('./n4_quiz.json?v=6')
             ]);
-            if (!bankResponse.ok || !bank02Response.ok || !kanjiResponse.ok) throw new Error('data');
-            const bank = [...await bankResponse.json(), ...await bank02Response.json()];
+            if (!bankResponse.ok || !bank02Response.ok || !bank03Response.ok || !kanjiResponse.ok) throw new Error('data');
+            const bank = [...await bankResponse.json(), ...await bank02Response.json(), ...await bank03Response.json()];
             const kanji = await kanjiResponse.json();
             const readingPool = kanji.map(item => {
                 const options = item.options?.length === 4 ? [...item.options] : TaoLuaChonKana(item.correct);
