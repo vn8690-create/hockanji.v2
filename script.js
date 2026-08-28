@@ -1783,24 +1783,28 @@ async function BatDauThiThu(level = 'n5') {
             return;
         }
         if (level === 'n2') {
-            const [coreResponse, readingResponse, core02Response, reading02Response, reading03Response] = await Promise.all([
+            const [coreResponse, readingResponse, core02Response, reading02Response, reading03Response, reading04Response, reading05Response, reading06Response] = await Promise.all([
                 fetch('./n2_mock_verified_core.json?v=4'),
                 fetch('./n2_mock_beta_reading.json?v=5'),
                 fetch('./n2_mock_set02_core.json?v=1'),
                 fetch('./n2_mock_set02_reading.json?v=2'),
-                fetch('./n2_mock_reading_r03.json?v=1')
+                fetch('./n2_mock_reading_r03.json?v=1'),
+                fetch('./n2_mock_reading_r04.json?v=1'),
+                fetch('./n2_mock_reading_r05.json?v=1'),
+                fetch('./n2_mock_reading_r06.json?v=1')
             ]);
-            if (!coreResponse.ok || !readingResponse.ok || !core02Response.ok || !reading02Response.ok || !reading03Response.ok) throw new Error('data');
-            const [core, reading, core02, reading02, reading03] = await Promise.all([
-                coreResponse.json(), readingResponse.json(), core02Response.json(), reading02Response.json(), reading03Response.json()
+            if (!coreResponse.ok || !readingResponse.ok || !core02Response.ok || !reading02Response.ok || !reading03Response.ok || !reading04Response.ok || !reading05Response.ok || !reading06Response.ok) throw new Error('data');
+            const [core, reading, core02, reading02, reading03, reading04, reading05, reading06] = await Promise.all([
+                coreResponse.json(), readingResponse.json(), core02Response.json(), reading02Response.json(), reading03Response.json(), reading04Response.json(), reading05Response.json(), reading06Response.json()
             ]);
+            const cacKhoDoc = [reading, reading02, reading03, reading04, reading05, reading06];
             const de01 = [...core, ...reading];
             const de02 = [...core02, ...reading02];
             const taoDeKetHop = soDeKetHop => {
                 const deKetHop = [];
                 Object.entries(DINH_MUC_DE_N2).forEach(([section, quota], sectionIndex) => {
                     if (section.startsWith('読解')) {
-                        const boDocNguyenVen = [reading, reading02, reading03][(soDeKetHop - 1) % 3];
+                        const boDocNguyenVen = cacKhoDoc[(soDeKetHop - 1) % cacKhoDoc.length];
                         deKetHop.push(...boDocNguyenVen.filter(item => item.section === section));
                         return;
                     }
@@ -1830,7 +1834,7 @@ async function BatDauThiThu(level = 'n5') {
             mangCauHoiTest = deThiTheoNhom.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = `N2-${String(soDe).padStart(2, '0')}`;
-            const maKhoDoc = `R${String((soDe - 1) % 3 + 1).padStart(2, '0')}`;
+            const maKhoDoc = `R${String((soDe - 1) % cacKhoDoc.length + 1).padStart(2, '0')}`;
             document.getElementById('race-message').textContent = `${maDe} / 09 · Kho đọc ${maKhoDoc} nguyên bộ · 71 câu / 105 phút.`;
             return;
         }
