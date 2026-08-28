@@ -1379,7 +1379,7 @@ window.addEventListener('resize', () => {
 // =========================================================================
 // KHU VỰC ĐẤU TRƯỜNG TEST TRẮC NGHIỆM 4 ĐÁP ÁN
 // =========================================================================
-function KichHoatLamDe(theLoai) {
+async function KichHoatLamDe(theLoai) {
     theLoaiTestChon = theLoai;
     ChuyenTab('man-lam-bai-test');
     
@@ -1387,21 +1387,22 @@ function KichHoatLamDe(theLoai) {
     
     if (theLoai === 'ngu-phap') {
         fileNguon = `${fileNguon}_grammar`;
-    } else if (theLoai === 'kanji' && ['n5', 'n4'].includes(fileNguon)) {
-        fileNguon = `${fileNguon}_quiz`;
+    } else if (theLoai === 'kanji') {
+        if (['n5', 'n4'].includes(fileNguon)) fileNguon = `${fileNguon}_quiz`;
+        if (fileNguon === 'n2') fileNguon = 'n2_moji_goi';
     }
     
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
     if (cauHoiTxt) cauHoiTxt.innerHTML = `<div class="loading-text">⚡ Đang thiết lập đấu trường trận đấu...</div>`;
 
-    fetch(`./${fileNguon}.json?v=${new Date().getTime()}`)
-        .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-        .then(khoGoc => { TaoDeTracNghiem(khoGoc); })
-        .catch(() => {
-            if (cauHoiTxt) {
-                cauHoiTxt.innerHTML = `<span style="color:#ef4444; font-size:1.1rem;">❌ Không thể kết nối đề thi file gốc "${fileNguon}.json"!<br>Bro vui lòng kiểm tra lại tên file trong thư mục dự án nhé.</span>`;
-            }
-        });
+    try {
+        await NapBangHanVietToanCuc();
+        const response = await fetch(`./${fileNguon}.json?v=${new Date().getTime()}`);
+        if (!response.ok) throw new Error();
+        TaoDeTracNghiem(await response.json());
+    } catch {
+        if (cauHoiTxt) cauHoiTxt.innerHTML = `<span style="color:#ef4444; font-size:1.1rem;">❌ Không thể kết nối đề thi file gốc "${fileNguon}.json"!<br>Bro vui lòng thử tải lại trang nhé.</span>`;
+    }
 }
 
 function TaoLuaChonKana(dapAnDung) {
@@ -1428,6 +1429,49 @@ function TaoLuaChonKana(dapAnDung) {
     return [dapAnDung, ...nhieu].sort(() => Math.random() - .5);
 }
 
+function KatakanaSangHiragana(text = '') {
+    return [...text].map(char => {
+        const code = char.charCodeAt(0);
+        return code >= 0x30A1 && code <= 0x30F6 ? String.fromCharCode(code - 0x60) : char;
+    }).join('');
+}
+
+function LayCachDocDaiDien(item) {
+    const tachCachDoc = value => String(value || '').split(/[,，、\/]/).map(reading =>
+        KatakanaSangHiragana(reading.trim().replace(/[-‐ー]/g,''))
+    ).find(reading => /^[ぁ-ゖ]+$/.test(reading));
+    const on = tachCachDoc(item.onyomi);
+    if (on) return {reading:on,kind:'音読み'};
+    const kun = tachCachDoc(item.kunyomi);
+    return kun ? {reading:kun,kind:'訓読み'} : null;
+}
+
+function TachNghiaVaHanViet(item) {
+    const raw = String(item.meaning || item.nghia || '');
+    const match = raw.match(/^([^()]+)\(([^)]+)\)/);
+    if (match) return {hanViet:(item.han_viet || match[1]).trim().toUpperCase(),meaning:match[2].trim()};
+    const word = item.word || item.kanji || item.chu || '';
+    const bang = TaoBangAmHanViet();
+    const hanViet = [...word].filter(char => /\p{Script=Han}/u.test(char)).map(char => bang[char] || '').filter(Boolean).join(' ');
+    return {hanViet:(item.han_viet || hanViet).trim().toUpperCase(),meaning:raw};
+}
+
+function TaoGiaiThichCachDoc(item, reading) {
+    const word = item.word || item.kanji || item.chu || '';
+    const {hanViet,meaning} = TachNghiaVaHanViet(item);
+    const parts = [`<b>${EscapeHtml(word)}（${EscapeHtml(reading)}）</b>`];
+    if (hanViet) parts.push(`<span class="answer-han-viet">${EscapeHtml(hanViet)}</span>`);
+    if (meaning) parts.push(EscapeHtml(meaning));
+    return parts.join(' — ');
+}
+
+function TaoBonDapAnKana(dapAnDung, khoCachDoc) {
+    const tuKho = [...new Set(khoCachDoc)].filter(reading => reading && reading !== dapAnDung);
+    const luaChon = [dapAnDung, ...tuKho.sort(() => Math.random() - .5).slice(0,3)];
+    if (luaChon.length < 4) return TaoLuaChonKana(dapAnDung);
+    return luaChon.sort(() => Math.random() - .5);
+}
+
 function TaoDeTracNghiem(khoGoc) {
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
     if (!khoGoc || khoGoc.length < 4) {
@@ -1440,20 +1484,34 @@ function TaoDeTracNghiem(khoGoc) {
     cheDoOnCauSai = false;
     cheDoThiThuChuan = false;
 
-    if (khoGoc[0] && khoGoc[0].correct !== undefined) {
+    if (theLoaiTestChon === 'kanji' && khoGoc[0] && khoGoc[0].correct !== undefined) {
         let danhSachN5Tron = [...khoGoc].sort(() => 0.5 - Math.random());
         let soCauN5 = Math.min(20, danhSachN5Tron.length); 
 
         for (let i = 0; i < soCauN5; i++) {
             let itemN5 = danhSachN5Tron[i];
             mangCauHoiTest.push({
-                cauHoiText: `Cách đọc Hiragana chính xác của chữ Kanji này là gì: <br><span style="font-size:3.5rem; font-weight:bold; color:#fff; text-shadow: 0 0 10px #ff00ff;">${itemN5.kanji}</span>`,
+                cauHoiText: `<span class="japanese-test-prompt">＿＿＿のことばの読み方として最もよいものを選んでください。</span><br><span style="font-size:3.5rem; font-weight:bold; color:#fff; text-shadow:0 0 10px #ff00ff;">${itemN5.kanji}</span>`,
                 dung: itemN5.correct,
                 luaChon: (itemN5.options?.length === 4 ? [...itemN5.options] : TaoLuaChonKana(itemN5.correct)).sort(() => 0.5 - Math.random()),
-                key: `${capDoTestChon}-${theLoaiTestChon}-${itemN5.id || itemN5.kanji}`
+                key: `${capDoTestChon}-${theLoaiTestChon}-${itemN5.id || itemN5.kanji}`,
+                skill:'kanji',
+                explanation:TaoGiaiThichCachDoc(itemN5,itemN5.correct)
             });
         }
-    } 
+    }
+    else if (theLoaiTestChon === 'kanji' && khoGoc[0]?.word && khoGoc[0]?.reading) {
+        const danhSach = [...khoGoc].sort(() => Math.random() - .5).slice(0,20);
+        const khoKana = khoGoc.map(item => item.reading);
+        danhSach.forEach(item => mangCauHoiTest.push({
+            cauHoiText:`<span class="japanese-test-prompt">＿＿＿のことばの読み方として最もよいものを選んでください。</span><br><span style="font-size:3.2rem;font-weight:900;color:#fff">${item.word}</span>`,
+            dung:item.reading,
+            luaChon:TaoBonDapAnKana(item.reading,khoKana),
+            key:`${capDoTestChon}-kanji-${item.id}`,
+            skill:'kanji',
+            explanation:TaoGiaiThichCachDoc(item,item.reading)
+        }));
+    }
     else {
         let danhSachTron = [...khoGoc].sort(() => 0.5 - Math.random());
         let soCau = Math.min(10, danhSachTron.length);
@@ -1467,7 +1525,12 @@ function TaoDeTracNghiem(khoGoc) {
             let nghiaGoc = itemGoc.meaning || itemGoc.nghia || "";
             let grammarGoc = itemGoc.grammar || itemGoc.cau_truc || "";
 
-            if (theLoaiTestChon === 'kanji' || theLoaiTestChon === 'han-viet') {
+            if (theLoaiTestChon === 'kanji') {
+                const cachDoc = LayCachDocDaiDien(itemGoc);
+                if (!cachDoc) continue;
+                cauHoi = `<span class="japanese-test-prompt">この漢字の代表的な${cachDoc.kind}はどれですか。</span><br><span style="font-size:3.5rem;font-weight:bold;color:#fff">${chuGoc}</span>`;
+                dapAnDung = cachDoc.reading;
+            } else if (theLoaiTestChon === 'han-viet') {
                 cauHoi = `Chữ Kanji này có âm Hán Việt là gì: <br><span style="font-size:3.5rem; font-weight:bold; color:#fff;">${chuGoc}</span>`;
                 dapAnDung = (nghiaGoc.includes('(') && nghiaGoc.includes(')')) ? nghiaGoc.split('(')[0].trim() : (itemGoc.han_viet || nghiaGoc);
             } else if (theLoaiTestChon === 'tu-vung') {
@@ -1482,7 +1545,9 @@ function TaoDeTracNghiem(khoGoc) {
             let dapAnNhieu = cacTuKhac.map(x => {
                 let n = x.meaning || x.nghia || "";
                 let h = x.han_viet || n;
-                if (theLoaiTestChon === 'kanji' || theLoaiTestChon === 'han-viet') {
+                if (theLoaiTestChon === 'kanji') {
+                    return LayCachDocDaiDien(x)?.reading || '';
+                } else if (theLoaiTestChon === 'han-viet') {
                     return (n.includes('(') && n.includes(')')) ? n.split('(')[0].trim() : h;
                 } else if (theLoaiTestChon === 'tu-vung') {
                     return (n.includes('(') && n.includes(')')) ? n.substring(n.indexOf('(') + 1, n.indexOf(')')) : n;
@@ -1506,7 +1571,9 @@ function TaoDeTracNghiem(khoGoc) {
                 cauHoiText: cauHoi,
                 dung: dapAnDung,
                 luaChon: bo4DapAn,
-                key: `${capDoTestChon}-${theLoaiTestChon}-${itemGoc.id || itemGoc.questionNumber || chuGoc || grammarGoc}`
+                key: `${capDoTestChon}-${theLoaiTestChon}-${itemGoc.id || itemGoc.questionNumber || chuGoc || grammarGoc}`,
+                skill:theLoaiTestChon,
+                explanation:theLoaiTestChon === 'kanji' ? TaoGiaiThichCachDoc(itemGoc,dapAnDung) : ''
             });
         }
     }
