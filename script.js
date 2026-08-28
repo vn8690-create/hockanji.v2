@@ -1785,7 +1785,7 @@ async function BatDauThiThu(level = 'n5') {
         if (level === 'n2') {
             const [coreResponse, readingResponse, core02Response, reading02Response] = await Promise.all([
                 fetch('./n2_mock_verified_core.json?v=4'),
-                fetch('./n2_mock_beta_reading.json?v=4'),
+                fetch('./n2_mock_beta_reading.json?v=5'),
                 fetch('./n2_mock_set02_core.json?v=1'),
                 fetch('./n2_mock_set02_reading.json?v=1')
             ]);
@@ -1817,8 +1817,16 @@ async function BatDauThiThu(level = 'n5') {
             localStorage.setItem('n2_mock_set_last', String(soDe));
             const nganHang = soDe === 1 ? de01 : soDe === 2 ? de02 : taoDeKetHop(soDe);
             const deThi = TaoDeTheoDinhMuc(nganHang, DINH_MUC_DE_N2, 'n2', 1);
+            const deThiTheoNhom = Object.keys(DINH_MUC_DE_N2).flatMap(section => {
+                const nhom = deThi.filter(item => item.section === section);
+                if (!section.startsWith('読解')) return nhom;
+                return nhom.sort((a,b) =>
+                    (a.passageId || a.id).localeCompare(b.passageId || b.id, 'ja') ||
+                    a.id.localeCompare(b.id, 'ja')
+                );
+            });
             cheDoThiThuChuan = true;
-            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
+            mangCauHoiTest = deThiTheoNhom.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n2-set-${soDe}-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = `N2-${String(soDe).padStart(2, '0')}`;
             const maKhoDoc = soDe === 1 || soDe % 2 === 1 ? 'R01' : 'R02';
