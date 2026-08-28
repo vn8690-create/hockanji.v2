@@ -108,6 +108,7 @@ let n2VocabQuiz = [];
 let n2VocabQuizIndex = 0;
 let n2VocabQuizScore = 0;
 let n2VocabQuizAnswered = false;
+let vocabStudyLevel = 'n2';
 
 function KhoaNgayHienTai(date = new Date()) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -2029,8 +2030,12 @@ function MoLoTrinhN4() {
     document.getElementById('n4-readiness-title').textContent=readiness>=80?'Sẵn sàng luyện đề N4':readiness>=55?'Đang tiến bộ tốt':readiness>=25?'Đang xây nền N4':'Bắt đầu xây nền N4';
     document.getElementById('n4-readiness-note').textContent=readiness>=80?'Tiếp tục sửa câu sai và giữ điểm thi thử ổn định.':'Ưu tiên Hán Việt, ngữ pháp rồi mới tăng tốc đọc hiểu.';
     const bar=(id,value)=>document.getElementById(id).style.width=`${value}%`;
-    bar('n4-kanji-bar',Math.max(kanjiCompletion,hanVietRate,kanjiRate));bar('n4-grammar-bar',grammarRate);bar('n4-reading-bar',readingRate);
+    let vocabMastered = 0;
+    try { vocabMastered = JSON.parse(localStorage.getItem('n4_vocab_mastered') || '[]').length; } catch {}
+    const vocabCompletion = Math.min(100, Math.round(vocabMastered / 60 * 100));
+    bar('n4-kanji-bar',Math.max(kanjiCompletion,hanVietRate,kanjiRate));bar('n4-vocab-bar',Math.max(vocabCompletion,vocabRate));bar('n4-grammar-bar',grammarRate);bar('n4-reading-bar',readingRate);
     document.getElementById('n4-kanji-status').textContent=`Đã xem ${soKanji}/186 chữ${hanVietRate?` · Hán Việt ${hanVietRate}%`:''}`;
+    document.getElementById('n4-vocab-status').textContent=vocabMastered?`Đã nhớ ${vocabMastered}/60 từ`:'Chưa bắt đầu';
     document.getElementById('n4-grammar-status').textContent=grammarRate?`Độ chính xác: ${grammarRate}%`:'Chưa có kết quả kiểm tra';
     document.getElementById('n4-reading-status').textContent=`${soBaiDoc}/16 bài hoàn thành`;
     document.getElementById('n4-mistake-status').textContent=sai?`${sai} câu đang chờ ôn lại`:'Chưa có câu cần ôn';
@@ -2051,12 +2056,12 @@ function CongDiemXP(soDiem) {
 // 文字・語彙 N2 - học theo chủ đề, nghe, đánh dấu nhớ và kiểm tra nhanh
 // =========================================================================
 function LayTienDoTuVungN2() {
-    try { return new Set(JSON.parse(localStorage.getItem('n2_vocab_mastered') || '[]')); }
+    try { return new Set(JSON.parse(localStorage.getItem(`${vocabStudyLevel}_vocab_mastered`) || '[]')); }
     catch { return new Set(); }
 }
 
 function LuuTienDoTuVungN2(tapDaNho) {
-    localStorage.setItem('n2_vocab_mastered', JSON.stringify([...tapDaNho]));
+    localStorage.setItem(`${vocabStudyLevel}_vocab_mastered`, JSON.stringify([...tapDaNho]));
     CapNhatTongQuanTuVungN2();
 }
 
@@ -2065,24 +2070,37 @@ function EscapeHtml(value = '') {
 }
 
 async function MoKhoTuVungN2() {
+    return MoKhoTuVungJLPT('n2');
+}
+
+async function MoKhoTuVungJLPT(level = 'n2') {
+    vocabStudyLevel = level.toLowerCase();
+    n2VocabData = [];
+    n2VocabSessionIds = null;
     ChuyenTab('man-n2-vocab');
-    if (n2VocabData.length) { HienThiKhoTuVungN2(); return; }
+    const label = vocabStudyLevel.toUpperCase();
+    document.getElementById('vocab-level-eyebrow').textContent = `文字・語彙・${label}`;
+    document.getElementById('vocab-level-title').textContent = `Kho từ vựng ${label}`;
+    document.querySelector('#man-n2-vocab-quiz h2').textContent = `Kiểm tra nhanh ${label}`;
+    document.getElementById('vocab-back-button').onclick = () => vocabStudyLevel === 'n4' ? MoLoTrinhN4() : ChuyenTab('man-study-hub');
+    document.getElementById('n2-vocab-list').innerHTML = `<div class="reading-loading">Đang mở kho 文字・語彙 ${label}…</div>`;
     try {
-        const response = await fetch('./n2_moji_goi.json?v=1');
+        const response = await fetch(`./${vocabStudyLevel}_moji_goi.json?v=1`);
         if (!response.ok) throw new Error('Không tải được kho từ vựng');
         n2VocabData = await response.json();
         const select = document.getElementById('n2-vocab-topic');
         const topics = [...new Map(n2VocabData.map(item => [item.topicId, item.topic])).entries()];
         select.innerHTML = '<option value="all">Tất cả chủ đề</option>' + topics.map(([id,name]) => `<option value="${EscapeHtml(id)}">${EscapeHtml(name)}</option>`).join('');
+        document.getElementById('vocab-total-label').textContent = `/${n2VocabData.length} đã nhớ`;
         HienThiKhoTuVungN2();
     } catch {
-        document.getElementById('n2-vocab-list').innerHTML = '<div class="reading-error">Không tải được kho 文字・語彙 N2. Hãy tải lại trang và thử lại.</div>';
+        document.getElementById('n2-vocab-list').innerHTML = `<div class="reading-error">Không tải được kho 文字・語彙 ${label}. Hãy tải lại trang và thử lại.</div>`;
     }
 }
 
 function CapNhatTongQuanTuVungN2() {
     const mastered = LayTienDoTuVungN2();
-    const total = n2VocabData.length || 120;
+    const total = n2VocabData.length || (vocabStudyLevel === 'n4' ? 60 : 120);
     const count = n2VocabData.length ? n2VocabData.filter(item => mastered.has(item.id)).length : mastered.size;
     const percent = Math.min(100, Math.round(count / total * 100));
     const number = document.getElementById('n2-vocab-mastered');
@@ -2196,7 +2214,7 @@ function TaoCauHoiTuVung(item, index) {
         return {item,type,label:'Ý NGHĨA',prompt:'Chọn nghĩa phù hợp nhất',word:`${item.word}（${item.reading}）`,options,answer:options.indexOf(item.meaning)};
     }
     const options = TaoBonLuaChon(item.word,sameTopic.map(word => word.word));
-    return {item,type,label:'NGỮ CẢNH',prompt:item.example.replace(item.word,'（　）'),word:'Điền từ thích hợp vào câu',options,answer:options.indexOf(item.word)};
+    return {item,type,label:'NGỮ CẢNH',prompt:item.cloze || item.example.replace(item.word,'（　）'),word:'Điền từ thích hợp vào câu',options,answer:options.indexOf(item.word)};
 }
 
 function BatDauKiemTraTuVungN2() {
@@ -2232,8 +2250,9 @@ function TraLoiKiemTraTuVung(optionIndex, button) {
     if (correct) { n2VocabQuizScore++; button.classList.add('correct'); CongDiemXP(3); }
     else {
         button.classList.add('wrong');
-        const wrong = new Set(JSON.parse(localStorage.getItem('n2_vocab_wrong') || '[]')); wrong.add(q.item.id);
-        localStorage.setItem('n2_vocab_wrong',JSON.stringify([...wrong]));
+        const wrongKey = `${vocabStudyLevel}_vocab_wrong`;
+        const wrong = new Set(JSON.parse(localStorage.getItem(wrongKey) || '[]')); wrong.add(q.item.id);
+        localStorage.setItem(wrongKey,JSON.stringify([...wrong]));
     }
     const aside = document.getElementById('n2-vocab-quiz-explanation');
     aside.innerHTML = `<b>${correct ? 'Chính xác!' : 'Chưa đúng.'}</b> ${EscapeHtml(q.item.word)}（${EscapeHtml(q.item.reading)}）— ${EscapeHtml(q.item.meaning)}<br>${EscapeHtml(q.item.example)}<br><span>${EscapeHtml(q.item.translation)}</span>`;
@@ -2253,7 +2272,7 @@ function CauTuVungTiepTheo() {
     document.getElementById('n2-vocab-quiz-options').innerHTML = `<button onclick="BatDauKiemTraTuVungN2()">LÀM BỘ 10 CÂU MỚI</button><button onclick="KetThucKiemTraTuVungN2()">VỀ KHO TỪ VỰNG</button>`;
     document.getElementById('n2-vocab-quiz-explanation').classList.add('an-giau');
     document.getElementById('n2-vocab-quiz-next').classList.add('an-giau');
-    localStorage.setItem('n2_vocab_quiz_last',JSON.stringify({score:n2VocabQuizScore,total:10,at:Date.now()}));
+    localStorage.setItem(`${vocabStudyLevel}_vocab_quiz_last`,JSON.stringify({score:n2VocabQuizScore,total:10,at:Date.now()}));
     card?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
