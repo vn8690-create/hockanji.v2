@@ -290,6 +290,37 @@ body {
     background: #0055ff;
 }
 
+.resume-test-button {
+    color: #001410;
+    background: linear-gradient(135deg, #2dd4bf, #22d3ee);
+    border-color: rgba(94,234,212,.8);
+    box-shadow: 0 8px 22px rgba(34,211,238,.16);
+}
+
+.test-session-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pause-test-button {
+    min-height: 38px;
+    padding: 8px 12px;
+    color: #fde68a;
+    background: rgba(245,158,11,.1);
+    border: 1px solid rgba(245,158,11,.45);
+    border-radius: 8px;
+    font-size: .72rem;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    #man-lam-bai-test .thanh-dieu-huong { align-items: flex-start; gap: 8px; }
+    .test-session-actions { flex-direction: column; align-items: stretch; }
+    .pause-test-button, #man-lam-bai-test .nut-quay-lai { min-height: 34px; padding: 7px 9px; font-size: .63rem; }
+}
+
 /* ==========================================
    CYBER CARDS
 ========================================== */
