@@ -70,6 +70,20 @@ const DINH_MUC_DE_N3_A = {
     '読解｜問題7　情報検索': 2
 };
 const DINH_MUC_DE_N3_B = {...DINH_MUC_DE_N3_A, '文字・語彙｜問題5　用法': 5};
+const N3_MOJI_BANK = [
+    ['情報','じょうほう','thông tin','必要な情報をインターネットで調べた。'],['現在','げんざい','hiện tại','兄は現在、海外で働いている。'],['丸い','まるい','tròn','丸いテーブルを窓の近くに置いた。'],['有名','ゆうめい','nổi tiếng','この町は古い寺で有名だ。'],['角','かど','góc','次の角を右に曲がってください。'],['包む','つつむ','gói','割れないように新聞紙で包んだ。'],['計算','けいさん','tính toán','旅行に必要なお金を計算した。'],
+    ['記録','きろく','ghi chép','毎日の気温をノートに記録している。'],['広告','こうこく','quảng cáo','駅で新しい店の広告を見た。'],['冷える','ひえる','trở lạnh','夜になると急に空気が冷えた。'],['検査','けんさ','kiểm tra','病院で詳しい検査を受けた。'],['確か','たしか','chắc chắn','鍵をかけたかどうか確かめた。'],['絵画','かいが','hội họa','美術館で日本の絵画を見た。'],['資源','しげん','tài nguyên','限られた資源を大切に使う。'],
+    ['悔しい','くやしい','tiếc, cay cú','一点差で負けてとても悔しかった。'],['予約','よやく','đặt trước','週末のホテルを予約した。'],['防ぐ','ふせぐ','phòng tránh','事故を防ぐために標識を増やした。'],['乾く','かわく','khô, khát','運動したのでのどが乾いた。'],['別々','べつべつ','riêng biệt','帰りは別々に家へ帰った。'],['相談','そうだん','trao đổi, tư vấn','進路について先生に相談した。'],['整理','せいり','sắp xếp','机の引き出しを整理した。'],
+    ['交流','こうりゅう','giao lưu','地域の人との交流を深めたい。'],['諦める','あきらめる','từ bỏ','雨が強くなり、登山を諦めた。'],['参加','さんか','tham gia','来週の説明会に参加する。'],['盛ん','さかん','thịnh hành','この町では国際交流が盛んだ。'],['通過','つうか','đi qua','電車は小さな駅を通過した。'],['普段','ふだん','thường ngày','普段は自転車で会社へ行く。'],['短気','たんき','nóng tính','父は短気だが、すぐに謝る。'],
+    ['詳しい','くわしい','chi tiết, am hiểu','詳しい説明を読んでから申し込んだ。'],['急激','きゅうげき','đột ngột','気温が急激に下がった。'],['積極的','せっきょくてき','tích cực','会議では積極的に意見を言う。'],['適切','てきせつ','thích hợp','状況に応じて適切に判断する。'],['確認','かくにん','xác nhận','出発前に時間を確認してください。'],['完成','かんせい','hoàn thành','新しい橋が来月完成する。'],['改善','かいぜん','cải thiện','働き方を改善する方法を考えた。'],
+    ['影響','えいきょう','ảnh hưởng','睡眠不足は仕事に影響する。'],['増加','ぞうか','tăng lên','外国人の利用者が増加している。'],['減少','げんしょう','giảm xuống','この地域では人口が減少した。'],['原因','げんいん','nguyên nhân','事故の原因を詳しく調べる。'],['結果','けっか','kết quả','試験の結果は来週発表される。'],['提案','ていあん','đề xuất','会議で新しい計画を提案した。'],['協力','きょうりょく','hợp tác','町の人に調査への協力を頼んだ。'],
+    ['責任','せきにん','trách nhiệm','自分の仕事に責任を持つ。'],['判断','はんだん','phán đoán','情報を集めてから判断した。'],['準備','じゅんび','chuẩn bị','発表の準備に二週間かかった。'],['経験','けいけん','kinh nghiệm','海外で働いた経験がある。'],['技術','ぎじゅつ','kỹ thuật','新しい技術を仕事に生かす。'],['環境','かんきょう','môi trường','子どもが学びやすい環境を作る。'],['制度','せいど','chế độ','会社は新しい休暇制度を始めた。']
+];
+const N3_SYNONYM_BANK = [
+    ['普段','いつも'],['詳しい','細かい'],['急激','急に'],['確認する','確かめる'],['諦める','やめる'],
+    ['適切','ふさわしい'],['増加する','増える'],['減少する','減る'],['提案する','案を出す'],['協力する','力を合わせる'],
+    ['判断する','決める'],['完成する','出来上がる'],['参加する','加わる'],['改善する','よくする'],['有名','よく知られている']
+];
 const DINH_MUC_DE_N2 = {
     '文字・語彙｜問題1　漢字の読み方': 5,
     '文字・語彙｜問題2　漢字表記': 5,
@@ -183,7 +197,7 @@ function CapNhatNhiemVuHomNay() {
     const state = LayNhiemVuHomNay();
     let streak = { count: 0 };
     try { streak = JSON.parse(localStorage.getItem('jlpt_learning_streak') || 'null') || streak; } catch {}
-    const soCauDenHan = ['n5', 'n4', 'n2'].flatMap(level => LaySoCauSai(level)).filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now()).length;
+    const soCauDenHan = ['n5', 'n4', 'n3', 'n2'].flatMap(level => LaySoCauSai(level)).filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now()).length;
     const mucOnSai = Math.min(3, soCauDenHan);
     const goals = [state.xp >= 30, state.questions >= 10, mucOnSai === 0 || state.reviews >= mucOnSai];
     const completed = goals.filter(Boolean).length;
@@ -326,7 +340,7 @@ function ChonCapDoTest(capDo) {
     const tieuDeLevel = document.getElementById('tieu-de-level-test');
     if (tieuDeLevel) tieuDeLevel.innerText = `ĐANG CHỌN: TEST ${capDo.toUpperCase()}`;
     const mockButton = document.getElementById('n5-mock-test-button');
-    if (mockButton) mockButton.hidden = !['n5', 'n4', 'n2'].includes(capDo);
+    if (mockButton) mockButton.hidden = !['n5', 'n4', 'n3', 'n2'].includes(capDo);
     CapNhatNutTiepTucThi(capDo);
     ChuyenTab('man-test-the-loai');
 }
@@ -1651,7 +1665,7 @@ function KhoaTienDoThiThu(level = capDoTestChon) {
 }
 
 function LayTienDoThiThu(level = capDoTestChon) {
-    if (!['n5', 'n4', 'n2'].includes(level)) return null;
+    if (!['n5', 'n4', 'n3', 'n2'].includes(level)) return null;
     try {
         const state = JSON.parse(localStorage.getItem(KhoaTienDoThiThu(level)) || 'null');
         return state?.questions?.length && state.index < state.questions.length ? state : null;
@@ -1659,7 +1673,7 @@ function LayTienDoThiThu(level = capDoTestChon) {
 }
 
 function LuuTienDoThiThu() {
-    if (!cheDoThiThuChuan || testDaHetGio || !mangCauHoiTest.length || !['n5', 'n4', 'n2'].includes(capDoTestChon)) return;
+    if (!cheDoThiThuChuan || testDaHetGio || !mangCauHoiTest.length || !['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon)) return;
     const state = {
         version: 1,
         level: capDoTestChon,
@@ -1904,7 +1918,7 @@ function LaySoCauSai(level = capDoTestChon || 'n5') {
 }
 
 function LuuCauSai(cauHoi, daChon) {
-    if (!cauHoi || !['n5', 'n4', 'n2'].includes(capDoTestChon)) return;
+    if (!cauHoi || !['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon)) return;
     const khoCu = LaySoCauSai(capDoTestChon);
     const banCu = khoCu.find(item => item.key === cauHoi.key);
     const khoSai = khoCu.filter(item => item.key !== cauHoi.key);
@@ -1934,7 +1948,7 @@ function XoaCauKhoiSoSai(key) {
 }
 
 function LuuKetQuaTest() {
-    if (!['n5', 'n4', 'n2'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
+    if (!['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
     const thongKe = JSON.parse(localStorage.getItem(`${capDoTestChon}_test_stats`) || '{}');
     const muc = thongKe[theLoaiTestChon] || { attempts: 0, correct: 0, total: 0 };
     muc.attempts++; muc.correct += soCauDungTest; muc.total += mangCauHoiTest.length; muc.lastAt = Date.now();
@@ -1950,6 +1964,96 @@ function BatDauOnCauSai(level = 'n5') {
     capDoTestChon = level; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; cheDoThiThuChuan = false; soCauDungTest = 0;
     mangCauHoiTest = [...denHan].sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0)).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
     indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); document.getElementById('pause-test-button')?.setAttribute('hidden', ''); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
+}
+
+function LayTheoVong(mang, soLuong, batDau = 0) {
+    return Array.from({length:soLuong}, (_, i) => mang[(batDau + i) % mang.length]);
+}
+
+function XoaTheHtmlN3(text = '') {
+    const tam = document.createElement('div');
+    tam.innerHTML = text;
+    tam.querySelectorAll('rt').forEach(rt => rt.remove());
+    return tam.textContent.replace(/\s+/g, ' ').trim();
+}
+
+function TaoLuaChonTheoKho(giaTriDung, kho, viTri, soLuong = 4) {
+    const khac = [...new Set(kho)].filter(value => value && value !== giaTriDung);
+    const luaChon = [giaTriDung];
+    for (let i = 0; luaChon.length < soLuong && i < khac.length; i++) luaChon.push(khac[(viTri * 7 + i * 11) % khac.length]);
+    return luaChon.sort((a,b) => ((a.length * 13 + viTri) % 17) - ((b.length * 13 + viTri) % 17));
+}
+
+function TaoDeN3Beta(soDe, grammarData, readingPacks) {
+    const quota = soDe <= 3 ? DINH_MUC_DE_N3_A : DINH_MUC_DE_N3_B;
+    const batDau = (soDe - 1) * 8;
+    const tu = LayTheoVong(N3_MOJI_BANK, 40, batDau);
+    const khoCachDoc = N3_MOJI_BANK.map(item => item[1]);
+    const khoTu = N3_MOJI_BANK.map(item => item[0]);
+    const cauHoi = [];
+
+    tu.slice(0,7).forEach((item,i) => cauHoi.push({
+        id:`n3-${soDe}-read-${i+1}`, section:'文字・語彙｜問題1　漢字の読み方', instruction:'＿＿＿の言葉の読み方として最もよいものを、一つ選びなさい。',
+        question:item[3].replace(item[0], `<u>${item[0]}</u>`), options:TaoLuaChonTheoKho(item[1],khoCachDoc,batDau+i), answer:0, correctValue:item[1], explanation:`${item[0]}（${item[1]}）：${item[2]}`
+    }));
+    tu.slice(7,13).forEach((item,i) => cauHoi.push({
+        id:`n3-${soDe}-spell-${i+1}`, section:'文字・語彙｜問題2　漢字表記', instruction:'＿＿＿の言葉を漢字で書くとき、最もよいものを一つ選びなさい。',
+        question:item[3].replace(item[0], `<u>${item[1]}</u>`), options:TaoLuaChonTheoKho(item[0],khoTu,batDau+i+9), answer:0, correctValue:item[0], explanation:`${item[1]} viết là ${item[0]}（${item[2]}）。`
+    }));
+    tu.slice(13,24).forEach((item,i) => cauHoi.push({
+        id:`n3-${soDe}-context-${i+1}`, section:'文字・語彙｜問題3　文脈規定', instruction:'（　）に入れるのに最もよいものを、一つ選びなさい。',
+        question:item[3].replace(item[0], '（　）'), options:TaoLuaChonTheoKho(item[0],khoTu,batDau+i+17), answer:0, correctValue:item[0], explanation:`${item[0]}：${item[2]}`
+    }));
+    const dongNghia = LayTheoVong(N3_SYNONYM_BANK,5,batDau);
+    const khoDongNghia = N3_SYNONYM_BANK.map(item => item[1]);
+    dongNghia.forEach((item,i) => {
+        const tuGoc = item[0].replace(/する$/,'');
+        const cauMau = N3_MOJI_BANK.find(row => row[0] === tuGoc)?.[3] || `${item[0]}ことが大切だ。`;
+        cauHoi.push({
+            id:`n3-${soDe}-syn-${i+1}`, section:'文字・語彙｜問題4　言い換え類義', instruction:'＿＿＿に意味が最も近いものを、一つ選びなさい。',
+            question:cauMau.replace(tuGoc,`<u>${tuGoc}</u>`), options:TaoLuaChonTheoKho(item[1],khoDongNghia,batDau+i+25), answer:0, correctValue:item[1], explanation:`${item[0]} ≈ ${item[1]}`
+        });
+    });
+    const soCauDungPhap = quota['文字・語彙｜問題5　用法'];
+    tu.slice(24,24+soCauDungPhap).forEach((item,i) => {
+        const cacCauSai = LayTheoVong(N3_MOJI_BANK.filter(x => x[0] !== item[0]),3,batDau+i).map(x => x[3].replace(x[0],item[0]));
+        cauHoi.push({id:`n3-${soDe}-usage-${i+1}`,section:'文字・語彙｜問題5　用法',instruction:`次の言葉の使い方として最もよいものを、一つ選びなさい。`,question:`<b>${item[0]}</b>`,options:[item[3],...cacCauSai],answer:0,correctValue:item[3],explanation:`${item[0]}：${item[2]}`});
+    });
+
+    const grammarSach = grammarData.filter(item => item.grammar && item.meaning && item.examples?.[0]?.ja && !/[À-ỹ]/.test(item.examples[0].ja));
+    const mauNguPhap = LayTheoVong(grammarSach,23,(soDe-1)*17);
+    const khoMau = grammarSach.map(item => item.grammar);
+    const khoNghia = grammarSach.map(item => item.meaning);
+    mauNguPhap.forEach((item,i) => {
+        const section = i < 13 ? '文法｜問題1　文の文法' : i < 18 ? '文法｜問題2　文の組み立て' : '文法｜問題3　文章の文法';
+        const cauNhat = XoaTheHtmlN3(item.examples[0].ja);
+        const hoiTheoMau = i < 13 || i >= 18;
+        cauHoi.push({
+            id:`n3-${soDe}-grammar-${i+1}`, section,
+            instruction:i < 13 ? '文の意味に最も合う文型を、一つ選びなさい。' : i < 18 ? '文の組み立てに必要な文型を、一つ選びなさい。' : '文章の流れに最も合うものを、一つ選びなさい。',
+            question:hoiTheoMau ? `${cauNhat}<br><small>Trong câu trên, mẫu ngữ pháp nào được sử dụng?</small>` : `${item.meaning}<br><small>Ý nghĩa trên phù hợp với mẫu nào?</small>`,
+            options:TaoLuaChonTheoKho(item.grammar,khoMau,batDau+i+31), answer:0, correctValue:item.grammar, explanation:`${item.grammar}：${item.meaning}`
+        });
+    });
+
+    const pack = readingPacks[(soDe - 1) % readingPacks.length];
+    const phanDoc = pack.passages.flatMap(passage => passage.questions.map((q,i) => ({passage,q,i,passageId:passage.id})));
+    const nhanDoc = Array(4).fill('読解｜問題4　内容理解（短文）').concat(Array(6).fill('読解｜問題5　内容理解（中文）'),Array(4).fill('読解｜問題6　内容理解（長文）'),Array(2).fill('読解｜問題7　情報検索'));
+    phanDoc.slice(0,16).forEach((entry,i) => cauHoi.push({
+        id:`n3-${soDe}-reading-${i+1}`, section:nhanDoc[i], instruction:'文章を読んで、質問に答えなさい。', passageId:entry.passageId,
+        question:`<div class="exam-passage">${entry.passage.text}</div><b>${entry.q[0]}</b>`, options:entry.q[1], answer:entry.q[2], explanation:`Đáp án được suy ra trực tiếp từ thông tin và ý chính trong đoạn văn.`
+    }));
+
+    return cauHoi.map(item => {
+        if (item.correctValue === undefined) return item;
+        const options = [...item.options];
+        const dung = item.correctValue;
+        const viTriDung = options.indexOf(dung);
+        if (viTriDung > 0) [options[0],options[viTriDung]] = [options[viTriDung],options[0]];
+        const xoay = (soDe + item.id.length) % options.length;
+        const daTron = options.slice(xoay).concat(options.slice(0,xoay));
+        return {...item,options:daTron,answer:daTron.indexOf(dung)};
+    });
 }
 
 async function BatDauThiThu(level = 'n5') {
@@ -2018,6 +2122,33 @@ async function BatDauThiThu(level = 'n5') {
             maDeThiThuHienTai = maDe;
             document.getElementById('pause-test-button').hidden = false;
             document.getElementById('race-message').textContent = `${maDe} · 25 phút Từ vựng + 55 phút Ngữ pháp/Đọc hiểu · Không hiển thị đáp án khi đang thi.`;
+            LuuTienDoThiThu();
+            return;
+        }
+        if (level === 'n3') {
+            const [grammarResponse, readingResponse, profileResponse] = await Promise.all([
+                fetch('./n3_grammar.json?v=5'),
+                fetch('./n3_mock_reading_bank.json?v=1'),
+                fetch('./n3_mock_profiles.json?v=2')
+            ]);
+            if (!grammarResponse.ok || !readingResponse.ok || !profileResponse.ok) throw new Error('data');
+            const [grammarData, readingPacks, profiles] = await Promise.all([grammarResponse.json(),readingResponse.json(),profileResponse.json()]);
+            const lanTruoc = Number(localStorage.getItem('n3_mock_set_last') || 0);
+            const soDe = lanTruoc % 6 + 1;
+            localStorage.setItem('n3_mock_set_last',String(soDe));
+            const deThi = TaoDeN3Beta(soDe,grammarData,readingPacks);
+            const profile = profiles[soDe-1];
+            const quota = soDe <= 3 ? DINH_MUC_DE_N3_A : DINH_MUC_DE_N3_B;
+            const dungDinhMuc = Object.entries(quota).every(([section,count]) => deThi.filter(item => item.section === section).length === count);
+            if (!dungDinhMuc || deThi.length !== profile.questions) throw new Error('quota');
+            cheDoThiThuChuan = true;
+            mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:item.id,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation,passageId:item.passageId}));
+            indexTestHienTai=0;
+            maDeThiThuHienTai=`N3-${profile.rotation}`;
+            HienThiCauHoiTest();
+            BatDauDuongDuaTest(mangCauHoiTest.length,100*60);
+            document.getElementById('pause-test-button').hidden=false;
+            document.getElementById('race-message').textContent=`${maDeThiThuHienTai} / 06 · ${profile.vocabularyQuestions} 文字・語彙 + 23 文法 + 16 読解 · 100 phút.`;
             LuuTienDoThiThu();
             return;
         }
