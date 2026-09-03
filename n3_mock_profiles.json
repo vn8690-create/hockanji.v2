@@ -1,8 +1,8 @@
 [
-  {"rotation":"R01","reference":"12/2017","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
-  {"rotation":"R02","reference":"07/2018","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
-  {"rotation":"R03","reference":"07/2019","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
-  {"rotation":"R04","reference":"07/2021","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
-  {"rotation":"R05","reference":"07/2022","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"},
-  {"rotation":"R06","reference":"12/2022","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"authoring"}
+  {"rotation":"R01","reference":"12/2017","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"},
+  {"rotation":"R02","reference":"07/2018","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"},
+  {"rotation":"R03","reference":"07/2019","quota":"A","questions":74,"vocabularyQuestions":35,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"},
+  {"rotation":"R04","reference":"07/2021","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"},
+  {"rotation":"R05","reference":"07/2022","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"},
+  {"rotation":"R06","reference":"12/2022","quota":"B","questions":73,"vocabularyQuestions":34,"grammarQuestions":23,"readingQuestions":16,"vocabularyMinutes":30,"grammarReadingMinutes":70,"status":"beta"}
 ]
