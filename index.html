@@ -9,7 +9,7 @@
                initial-scale=1,
                viewport-fit=cover">
     <title>Học tiếng Nhật · JLPT N5–N1</title>
-    <link rel="stylesheet" href="./style.css?v=20260827-daily-profile-v1">
+    <link rel="stylesheet" href="./style.css?v=20260903-pause-resume-v1">
 </head>
 <body>
 
@@ -229,6 +229,7 @@
                 </div>
                 <div class="welcome" style="margin-top:10px;">Chọn thể loại nội dung bạn muốn quyết chiến:</div>
                 <div class="danh-sach-nut">
+                    <button id="resume-mock-test-button" class="nut-the-loai-test resume-test-button" onclick="TiepTucThiThuDaLuu()" hidden>▶️ Tiếp tục bài đang làm</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('han-viet')">🧠 Âm Hán Việt</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('kanji')">🎯 Cách đọc Kanji</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('tu-vung')">📝 Từ Vựng</button>
@@ -397,7 +398,10 @@
             <section id="man-lam-bai-test" class="man-hinh">
                 <div class="thanh-dieu-huong">
                     <div id="test-tien-do" style="color: #38bdf8; font-weight: bold;">Câu hỏi: 1 / 10</div>
-                    <button class="nut-quay-lai" onclick="ChuyenTab('man-test-levels')">HỦY TEST</button>
+                    <div class="test-session-actions">
+                        <button id="pause-test-button" class="pause-test-button" onclick="TamDungThiThu()" hidden>⏸ TẠM DỪNG</button>
+                        <button class="nut-quay-lai" onclick="HuyBaiTest()">HỦY TEST</button>
+                    </div>
                 </div>
 
                 <div id="test-race" class="test-race" aria-label="Đồng hồ làm bài" style="--race-progress:0%;--time-progress:360deg">
@@ -446,6 +450,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260828-grammar-labels-v1"></script>
+    <script src="./script.js?v=20260903-pause-resume-v1"></script>
 </body>
 </html>
