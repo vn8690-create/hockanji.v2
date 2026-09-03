@@ -28,6 +28,8 @@ let testDaHetGio = false;
 let soCauDungTest = 0;
 let cheDoOnCauSai = false;
 let cheDoThiThuChuan = false;
+let maDeThiThuHienTai = '';
+let lanLuuTienDoThiThu = 0;
 const DINH_MUC_DE_N5 = {
     '文字・語彙｜問題1　漢字の読み方': 7,
     '文字・語彙｜問題2　漢字表記': 5,
@@ -304,6 +306,8 @@ function ClearAllTimers() {
 }
 
 function ChuyenTab(idManHinh) {
+    const dangLamThiThu = document.getElementById('man-lam-bai-test')?.classList.contains('active');
+    if (dangLamThiThu && idManHinh !== 'man-lam-bai-test' && cheDoThiThuChuan && !testDaHetGio) LuuTienDoThiThu();
     ClearAllTimers();
 
     document.querySelectorAll('.man-hinh').forEach(man => man.classList.remove('active'));
@@ -323,6 +327,7 @@ function ChonCapDoTest(capDo) {
     if (tieuDeLevel) tieuDeLevel.innerText = `ĐANG CHỌN: TEST ${capDo.toUpperCase()}`;
     const mockButton = document.getElementById('n5-mock-test-button');
     if (mockButton) mockButton.hidden = !['n5', 'n4', 'n2'].includes(capDo);
+    CapNhatNutTiepTucThi(capDo);
     ChuyenTab('man-test-the-loai');
 }
 
@@ -1501,6 +1506,7 @@ function TaoDeTracNghiem(khoGoc) {
     soCauDungTest = 0;
     cheDoOnCauSai = false;
     cheDoThiThuChuan = false;
+    document.getElementById('pause-test-button')?.setAttribute('hidden', '');
 
     if (theLoaiTestChon === 'kanji' && khoGoc[0] && khoGoc[0].correct !== undefined) {
         let danhSachN5Tron = [...khoGoc].sort(() => 0.5 - Math.random());
@@ -1619,8 +1625,114 @@ function BatDauDuongDuaTest(soCau, soGiayCoDinh = null) {
     boDemDuongDuaTest = setInterval(() => {
         thoiGianTestConLai--;
         CapNhatDuongDuaTest();
+        if (cheDoThiThuChuan && Date.now() - lanLuuTienDoThiThu >= 10000) LuuTienDoThiThu();
         if (thoiGianTestConLai <= 0) HetGioLamTest();
     }, 1000);
+}
+
+function KhoiPhucDongHoThiThu(soGiayConLai, tongSoGiay) {
+    clearInterval(boDemDuongDuaTest);
+    tongThoiGianTest = Math.max(1, Number(tongSoGiay) || Number(soGiayConLai) || 1);
+    thoiGianTestConLai = Math.max(1, Number(soGiayConLai) || 1);
+    testDaHetGio = false;
+    const race = document.getElementById('test-race');
+    race?.classList.remove('warning', 'time-up', 'finished');
+    CapNhatDuongDuaTest();
+    boDemDuongDuaTest = setInterval(() => {
+        thoiGianTestConLai--;
+        CapNhatDuongDuaTest();
+        if (Date.now() - lanLuuTienDoThiThu >= 10000) LuuTienDoThiThu();
+        if (thoiGianTestConLai <= 0) HetGioLamTest();
+    }, 1000);
+}
+
+function KhoaTienDoThiThu(level = capDoTestChon) {
+    return `jlpt_paused_exam_${String(level || '').toLowerCase()}`;
+}
+
+function LayTienDoThiThu(level = capDoTestChon) {
+    if (!['n5', 'n4', 'n2'].includes(level)) return null;
+    try {
+        const state = JSON.parse(localStorage.getItem(KhoaTienDoThiThu(level)) || 'null');
+        return state?.questions?.length && state.index < state.questions.length ? state : null;
+    } catch { return null; }
+}
+
+function LuuTienDoThiThu() {
+    if (!cheDoThiThuChuan || testDaHetGio || !mangCauHoiTest.length || !['n5', 'n4', 'n2'].includes(capDoTestChon)) return;
+    const state = {
+        version: 1,
+        level: capDoTestChon,
+        type: theLoaiTestChon,
+        questions: mangCauHoiTest,
+        index: indexTestHienTai,
+        correct: soCauDungTest,
+        remaining: thoiGianTestConLai,
+        totalTime: tongThoiGianTest,
+        examCode: maDeThiThuHienTai,
+        message: document.getElementById('race-message')?.textContent || '',
+        savedAt: Date.now()
+    };
+    try {
+        localStorage.setItem(KhoaTienDoThiThu(capDoTestChon), JSON.stringify(state));
+        lanLuuTienDoThiThu = Date.now();
+    } catch {}
+}
+
+function XoaTienDoThiThu(level = capDoTestChon) {
+    if (level) localStorage.removeItem(KhoaTienDoThiThu(level));
+    CapNhatNutTiepTucThi(level);
+}
+
+function CapNhatNutTiepTucThi(level = capDoTestChon) {
+    const nut = document.getElementById('resume-mock-test-button');
+    if (!nut) return;
+    const state = LayTienDoThiThu(level);
+    nut.hidden = !state;
+    if (!state) return;
+    const daTraLoi = state.questions.filter(cau => cau.selectedAnswer !== undefined).length;
+    nut.textContent = `▶️ Tiếp tục ${state.examCode || level.toUpperCase()} · câu ${state.index + 1}/${state.questions.length} · còn ${DinhDangThoiGian(state.remaining)}`;
+    nut.setAttribute('aria-label', `Tiếp tục bài đang làm, đã trả lời ${daTraLoi} câu`);
+}
+
+function TamDungThiThu() {
+    if (!cheDoThiThuChuan || testDaHetGio) return;
+    LuuTienDoThiThu();
+    clearInterval(boDemDuongDuaTest);
+    ChuyenTab('man-test-the-loai');
+    CapNhatNutTiepTucThi(capDoTestChon);
+}
+
+function TiepTucThiThuDaLuu() {
+    const state = LayTienDoThiThu(capDoTestChon);
+    if (!state) { CapNhatNutTiepTucThi(capDoTestChon); return; }
+    capDoTestChon = state.level;
+    theLoaiTestChon = state.type || 'thi-thu';
+    cheDoOnCauSai = false;
+    cheDoThiThuChuan = true;
+    mangCauHoiTest = state.questions;
+    indexTestHienTai = Math.max(0, Math.min(state.index, mangCauHoiTest.length - 1));
+    soCauDungTest = Number(state.correct) || 0;
+    maDeThiThuHienTai = state.examCode || state.level.toUpperCase();
+    ChuyenTab('man-lam-bai-test');
+    document.getElementById('pause-test-button').hidden = false;
+    HienThiCauHoiTest();
+    if (state.message) {
+        const thongBaoGoc = state.message.replace(/(?: · Đã khôi phục bài làm\.)+$/g, '');
+        document.getElementById('race-message').textContent = `${thongBaoGoc} · Đã khôi phục bài làm.`;
+    }
+    KhoiPhucDongHoThiThu(state.remaining, state.totalTime);
+}
+
+function HuyBaiTest() {
+    if (cheDoThiThuChuan && mangCauHoiTest.length && !testDaHetGio) {
+        if (!confirm('Hủy bài sẽ xóa toàn bộ tiến độ của đề này. Bro chắc chắn muốn hủy chứ?')) return;
+        XoaTienDoThiThu(capDoTestChon);
+    }
+    clearInterval(boDemDuongDuaTest);
+    cheDoThiThuChuan = false;
+    mangCauHoiTest = [];
+    ChuyenTab('man-test-levels');
 }
 
 function CapNhatDuongDuaTest() {
@@ -1645,6 +1757,7 @@ function HetGioLamTest() {
     if (testDaHetGio) return;
     ChamCauThiThuHienTai();
     testDaHetGio = true;
+    XoaTienDoThiThu(capDoTestChon);
     clearInterval(boDemDuongDuaTest);
     const race = document.getElementById('test-race');
     race?.classList.add('time-up');
@@ -1687,8 +1800,13 @@ function HienThiCauHoiTest() {
             nutOpt.className = "nut-option-test";
             nutOpt.innerText = da;
             nutOpt.onclick = () => KiemTraKetQuaTest(nutOpt, da, phanTuCau.dung);
+            if (cheDoThiThuChuan && phanTuCau.selectedAnswer === da) nutOpt.classList.add('exam-selected-answer');
             khungDapAn.appendChild(nutOpt);
         });
+    }
+    if (cheDoThiThuChuan && phanTuCau.selectedAnswer !== undefined) {
+        daBamDapAn = true;
+        nutChuyenTest?.classList.remove('an-giau');
     }
 }
 
@@ -1708,6 +1826,7 @@ function KiemTraKetQuaTest(nutBam, textChon, textDung) {
         nutBam.classList.add('exam-selected-answer');
         if (laLanChonDau) GhiNhanHoatDong('questions', 1);
         document.getElementById('vung-nut-chuyen-test')?.classList.remove('an-giau');
+        LuuTienDoThiThu();
         return;
     }
 
@@ -1766,6 +1885,7 @@ function CauTestTiepTheo() {
         const nutChuyenTest = document.getElementById('vung-nut-chuyen-test');
         
         LuuKetQuaTest();
+        XoaTienDoThiThu(capDoTestChon);
         const tyLe = Math.round(soCauDungTest / mangCauHoiTest.length * 100);
         const nhom = {};
         mangCauHoiTest.forEach(cau => { const ten=(cau.section||'TỔNG HỢP').split('｜')[0]; nhom[ten] ||= {dung:0,tong:0}; nhom[ten].tong++; if(cau.wasCorrect) nhom[ten].dung++; });
@@ -1775,6 +1895,7 @@ function CauTestTiepTheo() {
         if (nutChuyenTest) nutChuyenTest.classList.add('an-giau');
     } else {
         HienThiCauHoiTest();
+        LuuTienDoThiThu();
     }
 }
 
@@ -1828,12 +1949,22 @@ function BatDauOnCauSai(level = 'n5') {
     if (!denHan.length) { alert('Hôm nay chưa có câu sai đến hạn ôn. Hệ thống sẽ nhắc lại đúng lịch ghi nhớ.'); return; }
     capDoTestChon = level; theLoaiTestChon = 'on-sai'; cheDoOnCauSai = true; cheDoThiThuChuan = false; soCauDungTest = 0;
     mangCauHoiTest = [...denHan].sort((a, b) => (a.nextReviewAt || 0) - (b.nextReviewAt || 0)).slice(0, 20).map(item => ({...item, luaChon: [...item.luaChon].sort(() => Math.random() - .5)}));
-    indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
+    indexTestHienTai = 0; ChuyenTab('man-lam-bai-test'); document.getElementById('pause-test-button')?.setAttribute('hidden', ''); HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length);
 }
 
 async function BatDauThiThu(level = 'n5') {
+    const baiDangDo = LayTienDoThiThu(level);
+    if (baiDangDo) {
+        capDoTestChon = level;
+        if (confirm(`Bạn còn ${baiDangDo.examCode || level.toUpperCase()} đang làm dở. Nhấn OK để làm tiếp; nhấn Hủy để tạo đề mới.`)) {
+            TiepTucThiThuDaLuu();
+            return;
+        }
+        XoaTienDoThiThu(level);
+    }
     capDoTestChon = level; theLoaiTestChon = 'thi-thu'; cheDoOnCauSai = false; soCauDungTest = 0;
     ChuyenTab('man-lam-bai-test');
+    document.getElementById('pause-test-button').hidden = true;
     document.getElementById('test-cau-hoi-text').textContent = `Đang tạo đề thi thử ${level.toUpperCase()}…`;
     try {
         if (level === 'n5') {
@@ -1845,7 +1976,10 @@ async function BatDauThiThu(level = 'n5') {
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n5-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = localStorage.getItem('n5_last_exam_code') || 'N5';
+            maDeThiThuHienTai = maDe;
+            document.getElementById('pause-test-button').hidden = false;
             document.getElementById('race-message').textContent = `${maDe} · Chế độ thi thật: đáp án và lời giải chỉ xuất hiện trong phần ôn câu sai.`;
+            LuuTienDoThiThu();
             return;
         }
         if (level === 'n4') {
@@ -1881,7 +2015,10 @@ async function BatDauThiThu(level = 'n5') {
             mangCauHoiTest = deThi.map(item => ({cauHoiText:item.question,dung:item.options[item.answer],luaChon:[...item.options],key:`n4-official-${item.id}`,skill:item.section.startsWith('読解')?'reading':item.section.startsWith('文法')?'ngu-phap':'tu-vung',section:item.section,instruction:item.instruction,explanation:item.explanation}));
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 80*60);
             const maDe = localStorage.getItem('n4_last_exam_code') || 'N4';
+            maDeThiThuHienTai = maDe;
+            document.getElementById('pause-test-button').hidden = false;
             document.getElementById('race-message').textContent = `${maDe} · 25 phút Từ vựng + 55 phút Ngữ pháp/Đọc hiểu · Không hiển thị đáp án khi đang thi.`;
+            LuuTienDoThiThu();
             return;
         }
         if (level === 'n2') {
@@ -1937,7 +2074,10 @@ async function BatDauThiThu(level = 'n5') {
             indexTestHienTai=0; HienThiCauHoiTest(); BatDauDuongDuaTest(mangCauHoiTest.length, 105*60);
             const maDe = `N2-${String(soDe).padStart(2, '0')}`;
             const maKhoDoc = `R${String((soDe - 1) % cacKhoDoc.length + 1).padStart(2, '0')}`;
+            maDeThiThuHienTai = maDe;
+            document.getElementById('pause-test-button').hidden = false;
             document.getElementById('race-message').textContent = `${maDe} / 09 · Kho đọc ${maKhoDoc} nguyên bộ · 71 câu / 105 phút.`;
+            LuuTienDoThiThu();
             return;
         }
         const [kanjiRes, grammarRes] = await Promise.all([fetch(`./${level}_quiz.json?v=5`), fetch(`./${level}_grammar.json?v=4`)]);
@@ -1951,6 +2091,7 @@ async function BatDauThiThu(level = 'n5') {
         const nghia = grammar.map(x=>x.meaning);
         const cauGrammar = tron(grammar).slice(0,10).map((item,index) => { const kyHieu=DinhDangKyHieuNguPhap(item.grammar); return {cauHoiText:`Mẫu ngữ pháp <b>${kyHieu.hienThi}</b>${kyHieu.chuThich?`<small style="display:block;color:#f0abfc;">${kyHieu.chuThich}</small>`:''} có nghĩa phù hợp nhất là gì?`,dung:item.meaning,luaChon:tron([item.meaning,...tron(nghia.filter(x=>x!==item.meaning)).slice(0,3)]),key:`${level}-mock-g-${index}-${item.grammar}`,skill:'ngu-phap'}; });
         mangCauHoiTest = tron([...cauKanji,...cauVocab,...cauGrammar]); indexTestHienTai=0;
+        document.getElementById('pause-test-button').hidden = true;
         HienThiCauHoiTest(); BatDauDuongDuaTest(40);
     } catch { document.getElementById('test-cau-hoi-text').textContent = 'Không tải được dữ liệu thi thử. Hãy thử lại.'; }
 }
@@ -2471,4 +2612,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         tomTat.textContent = soSai ? `${soBai}/24 bài đọc · ${soSai} câu cần ôn lại` : `${soBai}/24 bài đọc · Sẵn sàng học tiếp`;
     }
+});
+
+window.addEventListener('beforeunload', () => {
+    if (cheDoThiThuChuan && !testDaHetGio) LuuTienDoThiThu();
 });
