@@ -1524,9 +1524,47 @@ function TaoTuKunHoanChinh(item) {
         const reading = normalized.replace(/-/g, '');
         const okurigana = viTriNoi >= 0 ? normalized.slice(viTriNoi + 1).replace(/-/g, '') : '';
         if (!reading) continue;
-        return { word:`${kanji}${okurigana}`, reading };
+        return { word:`${kanji}${okurigana}`, reading, okurigana };
     }
     return null;
+}
+
+function TaoBonDapAnN1TheoDuoiTu(item, khoTuKun) {
+    const dapAnDung = item.reading;
+    const duoiTu = item.okurigana || '';
+    const doDaiThan = Math.max(1, dapAnDung.length - duoiTu.length);
+    const ketQua = [];
+    const them = value => {
+        if (value && value !== dapAnDung && value.endsWith(duoiTu) && !ketQua.includes(value)) ketQua.push(value);
+    };
+
+    // Ưu tiên biến thể gần âm của chính từ: âm trong/đục hoặc cùng hàng kana.
+    const thanTu = dapAnDung.slice(0, doDaiThan);
+    const doiAm = {か:'が',き:'ぎ',く:'ぐ',け:'げ',こ:'ご',さ:'ざ',し:'じ',す:'ず',せ:'ぜ',そ:'ぞ',た:'だ',ち:'ぢ',つ:'づ',て:'で',と:'ど',は:'ば',ひ:'び',ふ:'ぶ',へ:'べ',ほ:'ぼ',が:'か',ぎ:'き',ぐ:'く',げ:'け',ご:'こ',ざ:'さ',じ:'し',ず:'す',ぜ:'せ',ぞ:'そ',だ:'た',ぢ:'ち',づ:'つ',で:'て',ど:'と',ば:'は',び:'ひ',ぶ:'ふ',べ:'へ',ぼ:'ほ'};
+    [...thanTu].forEach((chu,index) => {
+        if (!doiAm[chu]) return;
+        const banSao = [...thanTu]; banSao[index] = doiAm[chu]; them(`${banSao.join('')}${duoiTu}`);
+    });
+    const hangKana = ['あいうえお','かきくけこ','がぎぐげご','さしすせそ','ざじずぜぞ','たちつてと','だぢづでど','なにぬねの','はひふへほ','ばびぶべぼ','まみむめも','やゆよ','らりるれろ'];
+    [...thanTu].forEach((chu,index) => {
+        const hang = hangKana.find(row => row.includes(chu));
+        if (!hang) return;
+        const viTri = hang.indexOf(chu);
+        Array.from({length:hang.length - 1}, (_,i) => i + 1).forEach(buoc => {
+            const banSao = [...thanTu]; banSao[index] = hang[(viTri + buoc) % hang.length]; them(`${banSao.join('')}${duoiTu}`);
+        });
+    });
+    if (thanTu.length > 1) {
+        const doiCho = [...thanTu];
+        [doiCho[thanTu.length - 2], doiCho[thanTu.length - 1]] = [doiCho[thanTu.length - 1], doiCho[thanTu.length - 2]];
+        them(`${doiCho.join('')}${duoiTu}`);
+    }
+    // Thiếu mới lấy cách đọc của từ khác có cùng okurigana nhìn thấy trên đề.
+    khoTuKun
+        .filter(other => other.reading !== dapAnDung && (other.okurigana || '') === duoiTu)
+        .sort((a,b) => Math.abs(a.reading.length - dapAnDung.length) - Math.abs(b.reading.length - dapAnDung.length))
+        .forEach(other => them(other.reading));
+    return [dapAnDung, ...ketQua.slice(0,3)].sort(() => Math.random() - .5);
 }
 
 function TachNghiaVaHanViet(item) {
@@ -1598,12 +1636,11 @@ function TaoDeTracNghiem(khoGoc) {
     }
     else if (theLoaiTestChon === 'kanji' && capDoTestChon === 'n1') {
         const khoTuKun = khoGoc.map(TaoTuKunHoanChinh).filter(Boolean);
-        const khoKana = khoTuKun.map(item => item.reading);
         const danhSach = [...khoTuKun].sort(() => Math.random() - .5).slice(0,20);
         danhSach.forEach((item,index) => mangCauHoiTest.push({
             cauHoiText:`<span class="japanese-test-prompt">＿＿＿のことばの読み方として最もよいものを選んでください。</span><br><span style="font-size:3.2rem;font-weight:900;color:#fff"><u>${item.word}</u></span>`,
             dung:item.reading,
-            luaChon:TaoBonDapAnKana(item.reading,khoKana),
+            luaChon:TaoBonDapAnN1TheoDuoiTu(item,khoTuKun),
             key:`n1-kanji-kun-${item.word}-${index}`,
             skill:'kanji',
             explanation:`<b>${EscapeHtml(item.word)}（${EscapeHtml(item.reading)}）</b>`
