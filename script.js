@@ -245,6 +245,47 @@ let mảngDữLiệuGốcĐãTải = [];  // Lưu tạm dữ liệu sau khi fetc
 // Kho từ nhiễu dự phòng chuẩn Nhật ngữ phòng khi file gốc quá ngắn
 const KHO_NHIEU_DU_PHONG = ["上手", "下手", "元気", "安全", "水分", "時間", "先生", "学生", "会社"];
 
+// Dữ liệu N1 cũ có nhiều dòng trùng và từng dùng chuỗi "None" như một cách đọc.
+// Làm sạch tại cửa nạp để màn học, chia ngày và bài kiểm tra luôn dùng cùng một kho.
+const SUA_KANJI_N1 = {
+    痕: { meaning:'Ngấn (Vết tích, dấu vết)', onyomi:'コン', kunyomi:'あと', example:'痕跡 (Dấu vết), 傷痕 (Vết sẹo)' },
+    溝: { meaning:'Cấu (Rãnh, khoảng cách)', onyomi:'コウ', kunyomi:'みぞ', example:'排水溝 (Rãnh thoát nước), 溝が深い (Khoảng cách sâu sắc)' },
+    厳: { meaning:'Nghiêm (Nghiêm khắc, nghiêm ngặt)', onyomi:'ゲン / ゴン', kunyomi:'きび-しい / おごそ-か', example:'厳重 (Nghiêm ngặt), 厳しい (Nghiêm khắc)' },
+    鋭: { meaning:'Nhuệ (Sắc bén, nhạy bén)', onyomi:'エイ', kunyomi:'するど-い', example:'鋭い指摘 (Nhận xét sắc bén), 鋭敏 (Nhạy bén)' },
+    脚: { meaning:'Cước (Chân, kịch bản)', onyomi:'キャク / キャ / カク', kunyomi:'あし', example:'脚本 (Kịch bản), 三脚 (Chân máy)' },
+    錆: { meaning:'Thương (Gỉ, han gỉ)', onyomi:'ショウ', kunyomi:'さび / さ-びる', example:'錆びる (Bị gỉ), 錆止め (Chống gỉ)' },
+    鍵: { meaning:'Kiện (Chìa khóa, then chốt)', onyomi:'ケン', kunyomi:'かぎ', example:'鍵を掛ける (Khóa cửa), 問題解決の鍵 (Chìa khóa giải quyết vấn đề)' },
+    毀: { meaning:'Hủy (Làm hư hại, phá hoại)', onyomi:'キ', kunyomi:'', example:'名誉毀損 (Phỉ báng danh dự), 毀損 (Làm tổn hại)' },
+    蔽: { meaning:'Tế (Che phủ, che giấu)', onyomi:'ヘイ', kunyomi:'おお-う', example:'隠蔽 (Che giấu), 遮蔽 (Che chắn)' },
+    掛: { meaning:'Quải (Treo, mắc, đảm nhiệm)', onyomi:'', kunyomi:'か-ける / か-かる / かかり', example:'壁に掛ける (Treo lên tường), 掛かり付け (Quen thuộc, thường lui tới)' },
+    湿: { meaning:'Thấp (Ẩm, ẩm ướt)', onyomi:'シツ / シュウ', kunyomi:'しめ-る / しめ-す / うるお-う', example:'湿度 (Độ ẩm), 湿気 (Hơi ẩm)' },
+    // 枠 là chữ quốc tự của Nhật, không ép một âm Hán–Việt không có căn cứ.
+    枠: { meaning:'— (Khung, phạm vi)', onyomi:'', kunyomi:'わく', example:'枠組み (Khuôn khổ), 予算の枠 (Hạn mức ngân sách)' }
+};
+
+function ChuanHoaCachDocKanji(value) {
+    const text = String(value ?? '').trim();
+    return /^(none|null|n\/a|không có)$/i.test(text) ? '' : text;
+}
+
+function LamSachKhoKanji(data, level = '') {
+    if (!Array.isArray(data)) return [];
+    const theoChu = new Map();
+    data.forEach(raw => {
+        const kanji = String(raw?.kanji || raw?.chu || '').trim();
+        if (!kanji || theoChu.has(kanji)) return;
+        const item = {
+            ...raw,
+            kanji,
+            onyomi: ChuanHoaCachDocKanji(raw.onyomi),
+            kunyomi: ChuanHoaCachDocKanji(raw.kunyomi)
+        };
+        if (level.toLowerCase() === 'n1' && SUA_KANJI_N1[kanji]) Object.assign(item, SUA_KANJI_N1[kanji]);
+        theoChu.set(kanji, item);
+    });
+    return [...theoChu.values()];
+}
+
 // Một số chữ thường xuất hiện chéo cấp độ. Phần còn lại được lấy tự động
 // từ chính dữ liệu Kanji đang học nên không cần tải thêm tệp nặng.
 const HAN_VIET_BO_SUNG = {
@@ -405,7 +446,7 @@ function MoChonNgay(capDo) {
     fetch(`./${tenFileJson}.json?v=${new Date().getTime()}`)
         .then(res => { if (!res.ok) throw new Error(); return res.json(); })
         .then(data => {
-            mảngDữLiệuGốcĐãTải = data; // Lưu mảng gốc vào biến tạm
+            mảngDữLiệuGốcĐãTải = LamSachKhoKanji(data, capDo); // Bỏ chữ trùng và dữ liệu rỗng trước khi chia ngày
             if (capDo.toLowerCase() === 'n5') duLieuThuThachViet = data;
             
             const tongSoNgay = Math.ceil(mảngDữLiệuGốcĐãTải.length / WORDS_PER_DAY);
@@ -513,7 +554,7 @@ async function TaiDuLieuHoc(loaiHoc, tenFile) {
     fetch(`./${tenFile}.json?v=${new Date().getTime()}`)
         .then(res => { if (!res.ok) throw new Error(); return res.json(); })
         .then(data => {
-            duLieuHienTai = data; 
+            duLieuHienTai = loaiHoc === 'kanji' ? LamSachKhoKanji(data, tenFile) : data;
             let tienDoCu = parseInt(localStorage.getItem(`tien_do_${tenFileHienTai}`)) || 0;
 
             if (tienDoCu > 0 && tienDoCu < duLieuHienTai.length && vungChua && tieuDe) {
@@ -594,29 +635,13 @@ function ChayDongThoiGianFlashcard() {
     if (loaiHocHienTai === 'kanji') {
         const chuKanji = item.kanji || item.chu || "字";
         const nghiaGoc = item.meaning || item.nghia || "";
-        const onyomi = item.onyomi || "Không có âm On thông dụng";
-        const kunyomi = item.kunyomi || "Không có âm Kun thông dụng";
+        const onyomi = ChuanHoaCachDocKanji(item.onyomi) || "—";
+        const kunyomi = ChuanHoaCachDocKanji(item.kunyomi) || "—";
         const viDu = item.example || item.vi_du || "Chưa có ví dụ";
 
-        let amHanViet = "Chưa rõ";
-        let nghiaTiengViet = nghiaGoc;
-
-        if (nghiaGoc.includes('(') && nghiaGoc.includes(')')) {
-            let phanTuDau = nghiaGoc.split('(')[0].trim();
-            let phanTrongNgoac = nghiaGoc.substring(nghiaGoc.indexOf('(') + 1, nghiaGoc.indexOf(')')).trim();
-
-            if (phanTuDau === phanTuDau.toUpperCase() && phanTuDau !== phanTuDau.toLowerCase()) {
-                nghiaTiengViet = phanTuDau;       
-                amHanViet = phanTrongNgoac;       
-            } else {
-                amHanViet = phanTuDau;
-                nghiaTiengViet = phanTrongNgoac;
-            }
-        } else if (item.han_viet) {
-            amHanViet = item.han_viet;
-        } else {
-            amHanViet = nghiaGoc; 
-        }
+        const tachNghia = TachNghiaVaHanViet(item);
+        const amHanViet = tachNghia.hanViet || "—";
+        const nghiaTiengViet = tachNghia.meaning || nghiaGoc || "Chưa có nghĩa";
 
         if (vungChua) {
             vungChua.innerHTML = `
@@ -1436,7 +1461,8 @@ async function KichHoatLamDe(theLoai) {
         await NapBangHanVietToanCuc();
         const response = await fetch(`./${fileNguon}.json?v=${new Date().getTime()}`);
         if (!response.ok) throw new Error();
-        TaoDeTracNghiem(await response.json());
+        const data = await response.json();
+        TaoDeTracNghiem(theLoai === 'kanji' ? LamSachKhoKanji(data, capDoTestChon) : data);
     } catch {
         if (cauHoiTxt) cauHoiTxt.innerHTML = `<span style="color:#ef4444; font-size:1.1rem;">❌ Không thể kết nối đề thi file gốc "${fileNguon}.json"!<br>Bro vui lòng thử tải lại trang nhé.</span>`;
     }
@@ -1481,6 +1507,26 @@ function LayCachDocDaiDien(item) {
     if (on) return {reading:on,kind:'音読み'};
     const kun = tachCachDoc(item.kunyomi);
     return kun ? {reading:kun,kind:'訓読み'} : null;
+}
+
+// Tạo một từ Nhật hoàn chỉnh từ cách ghi Kun dạng "みだ-れる".
+// Không dùng âm On trần (ví dụ 乱 → らん), vì đó không phải câu hỏi đọc từ kiểu JLPT.
+function TaoTuKunHoanChinh(item) {
+    const kanji = String(item?.kanji || item?.chu || '').trim();
+    const cacCachDoc = String(item?.kunyomi || '')
+        .split(/[,，、\/]/)
+        .map(value => KatakanaSangHiragana(value.trim()))
+        .filter(value => value && !/^(none|null|n\/a)$/i.test(value));
+    for (const raw of cacCachDoc) {
+        const normalized = raw.replace(/[‐ー]/g, '-');
+        if (!/^[ぁ-ゖ-]+$/.test(normalized)) continue;
+        const viTriNoi = normalized.indexOf('-');
+        const reading = normalized.replace(/-/g, '');
+        const okurigana = viTriNoi >= 0 ? normalized.slice(viTriNoi + 1).replace(/-/g, '') : '';
+        if (!reading) continue;
+        return { word:`${kanji}${okurigana}`, reading };
+    }
+    return null;
 }
 
 function TachNghiaVaHanViet(item) {
@@ -1548,6 +1594,19 @@ function TaoDeTracNghiem(khoGoc) {
             key:`${capDoTestChon}-kanji-${item.id}`,
             skill:'kanji',
             explanation:TaoGiaiThichCachDoc(item,item.reading)
+        }));
+    }
+    else if (theLoaiTestChon === 'kanji' && capDoTestChon === 'n1') {
+        const khoTuKun = khoGoc.map(TaoTuKunHoanChinh).filter(Boolean);
+        const khoKana = khoTuKun.map(item => item.reading);
+        const danhSach = [...khoTuKun].sort(() => Math.random() - .5).slice(0,20);
+        danhSach.forEach((item,index) => mangCauHoiTest.push({
+            cauHoiText:`<span class="japanese-test-prompt">＿＿＿のことばの読み方として最もよいものを選んでください。</span><br><span style="font-size:3.2rem;font-weight:900;color:#fff"><u>${item.word}</u></span>`,
+            dung:item.reading,
+            luaChon:TaoBonDapAnKana(item.reading,khoKana),
+            key:`n1-kanji-kun-${item.word}-${index}`,
+            skill:'kanji',
+            explanation:`<b>${EscapeHtml(item.word)}（${EscapeHtml(item.reading)}）</b>`
         }));
     }
     else {
