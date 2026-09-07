@@ -383,8 +383,11 @@ function ChonCapDoTest(capDo) {
     const mockButton = document.getElementById('n5-mock-test-button');
     if (mockButton) {
         mockButton.hidden = !['n5', 'n4', 'n3', 'n2', 'n1'].includes(capDo);
-        mockButton.textContent = capDo === 'n1' ? '🏁 N1 Beta 01 · 68 câu / 110 phút (không nghe)' : '🏁 Thi thử tổng hợp';
+        mockButton.textContent = '🏁 Thi thử tổng hợp';
     }
+    const n1Picker = document.getElementById('n1-exam-picker');
+    if (n1Picker) n1Picker.hidden = capDo !== 'n1';
+    if (capDo === 'n1') CapNhatNutDeN1();
     CapNhatNutTiepTucThi(capDo);
     ChuyenTab('man-test-the-loai');
 }
@@ -2182,10 +2185,20 @@ function HtmlLoiGiaiN1() {
     return `<p class="n1-exam-question">Điểm đúng thô để tự luyện, không phải điểm quy đổi hay kết luận đỗ JLPT.</p><details class="n1-exam-review"><summary>Xem đáp án và lời giải tiếng Việt (${mangCauHoiTest.length} câu)</summary>${mangCauHoiTest.map((q, i) => `<details><summary>Câu ${i + 1} · ${q.selectedAnswer === q.dung ? 'Đúng' : q.selectedAnswer === undefined ? 'Chưa trả lời' : 'Sai'}</summary>${q.cauHoiText}<p>Bạn chọn: ${EscapeHtml(q.selectedAnswer ?? 'Chưa trả lời')}</p><p><b>Đáp án: ${EscapeHtml(q.dung)}</b></p><p>${EscapeHtml(q.explanation)}</p></details>`).join('')}</details>`;
 }
 
-// One authored exam: keep every passage and its questions together, shuffle answers only.
+function LayMaDeN1DuocChon() {
+    const selected = document.getElementById('n1-exam-set')?.value;
+    return ['01', '02', '03'].includes(selected) ? selected : '01';
+}
+
+function CapNhatNutDeN1() {
+    const button = document.getElementById('n5-mock-test-button');
+    if (capDoTestChon === 'n1' && button) button.textContent = `🏁 Bắt đầu N1 Beta ${LayMaDeN1DuocChon()} · 68 câu / 110 phút`;
+}
+
+// Each authored exam stays intact; shuffle its answer options only.
 function TaoDeN1TuBoCoDinh(bank) {
     const quotas = [6, 7, 6, 6, 10, 5, 4, 4, 9, 3, 2, 4, 2];
-    if (bank?.code !== 'N1-BETA-01' || bank.minutes !== 110 || bank.sections?.length !== quotas.length) throw new Error('N1 metadata');
+    if (!['N1-BETA-01', 'N1-BETA-02', 'N1-BETA-03'].includes(bank?.code) || bank.minutes !== 110 || bank.sections?.length !== quotas.length) throw new Error('N1 metadata');
     let number = 0;
     const passageIds = new Set();
     return bank.sections.flatMap((section, sectionIndex) => {
@@ -2209,7 +2222,7 @@ function TaoDeN1TuBoCoDinh(bank) {
                 return {
                     cauHoiText: `${passage}<p class="n1-exam-question">${safeQuestion}</p>`,
                     dung: shuffled.options[shuffled.answer], luaChon: shuffled.options,
-                    key: `n1-beta01-q${String(number).padStart(2, '0')}`,
+                    key: `n1-beta${bank.code.slice(-2)}-q${String(number).padStart(2, '0')}`,
                     skill: sectionIndex >= 7 ? 'reading' : sectionIndex >= 4 ? 'ngu-phap' : 'tu-vung',
                     section: section.name, instruction: section.instruction,
                     explanation, passageId: group.id || null
@@ -2239,9 +2252,11 @@ async function BatDauThiThu(level = 'n5') {
             cheDoThiThuChuan = false;
             document.getElementById('test-danh-sach-dap-an').innerHTML = '';
             document.getElementById('vung-nut-chuyen-test').classList.add('an-giau');
-            const response = await fetch('./n1_mock_01.json?v=20260907-1');
+            const setNumber = LayMaDeN1DuocChon();
+            const response = await fetch(`./n1_mock_${setNumber}.json?v=20260907-sets123-v1`);
             if (!response.ok) throw new Error('N1 data');
             const bank = await response.json();
+            if (bank.code !== `N1-BETA-${setNumber}`) throw new Error('N1 set mismatch');
             const questions = TaoDeN1TuBoCoDinh(bank);
             if (questions.length !== 68) throw new Error('N1 total');
             mangCauHoiTest = questions;
