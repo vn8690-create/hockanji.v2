@@ -197,7 +197,7 @@ function CapNhatNhiemVuHomNay() {
     const state = LayNhiemVuHomNay();
     let streak = { count: 0 };
     try { streak = JSON.parse(localStorage.getItem('jlpt_learning_streak') || 'null') || streak; } catch {}
-    const soCauDenHan = ['n5', 'n4', 'n3', 'n2'].flatMap(level => LaySoCauSai(level)).filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now()).length;
+    const soCauDenHan = ['n5', 'n4', 'n3', 'n2', 'n1'].flatMap(level => LaySoCauSai(level)).filter(item => !item.nextReviewAt || item.nextReviewAt <= Date.now()).length;
     const mucOnSai = Math.min(3, soCauDenHan);
     const goals = [state.xp >= 30, state.questions >= 10, mucOnSai === 0 || state.reviews >= mucOnSai];
     const completed = goals.filter(Boolean).length;
@@ -381,7 +381,10 @@ function ChonCapDoTest(capDo) {
     const tieuDeLevel = document.getElementById('tieu-de-level-test');
     if (tieuDeLevel) tieuDeLevel.innerText = `ĐANG CHỌN: TEST ${capDo.toUpperCase()}`;
     const mockButton = document.getElementById('n5-mock-test-button');
-    if (mockButton) mockButton.hidden = !['n5', 'n4', 'n3', 'n2'].includes(capDo);
+    if (mockButton) {
+        mockButton.hidden = !['n5', 'n4', 'n3', 'n2', 'n1'].includes(capDo);
+        mockButton.textContent = capDo === 'n1' ? '🏁 N1 Beta 01 · 68 câu / 110 phút (không nghe)' : '🏁 Thi thử tổng hợp';
+    }
     CapNhatNutTiepTucThi(capDo);
     ChuyenTab('man-test-the-loai');
 }
@@ -1773,7 +1776,7 @@ function KhoaTienDoThiThu(level = capDoTestChon) {
 }
 
 function LayTienDoThiThu(level = capDoTestChon) {
-    if (!['n5', 'n4', 'n3', 'n2'].includes(level)) return null;
+    if (!['n5', 'n4', 'n3', 'n2', 'n1'].includes(level)) return null;
     try {
         const state = JSON.parse(localStorage.getItem(KhoaTienDoThiThu(level)) || 'null');
         return state?.questions?.length && state.index < state.questions.length ? state : null;
@@ -1781,7 +1784,7 @@ function LayTienDoThiThu(level = capDoTestChon) {
 }
 
 function LuuTienDoThiThu() {
-    if (!cheDoThiThuChuan || testDaHetGio || !mangCauHoiTest.length || !['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon)) return;
+    if (!cheDoThiThuChuan || testDaHetGio || !mangCauHoiTest.length || !['n5', 'n4', 'n3', 'n2', 'n1'].includes(capDoTestChon)) return;
     const state = {
         version: 1,
         level: capDoTestChon,
@@ -1889,6 +1892,11 @@ function HetGioLamTest() {
     document.getElementById('vung-nut-chuyen-test')?.classList.add('an-giau');
     const cauHoiTxt = document.getElementById('test-cau-hoi-text');
     if (cauHoiTxt) cauHoiTxt.insertAdjacentHTML('beforeend', '<p class="test-time-up-text">⏱ Bài thi đã kết thúc do hết thời gian.</p>');
+    if (capDoTestChon === 'n1' && cheDoThiThuChuan) {
+        LuuKetQuaTest();
+        document.getElementById('pause-test-button').hidden = true;
+        cauHoiTxt?.insertAdjacentHTML('beforeend', `<p>Đúng ${soCauDungTest}/${mangCauHoiTest.length} câu (câu chưa trả lời tính là sai).</p>${HtmlLoiGiaiN1()}`);
+    }
 }
 
 function KetThucDuongDuaTest() {
@@ -2015,6 +2023,11 @@ function CauTestTiepTheo() {
         if (cauHoiTxt) cauHoiTxt.innerHTML = `🎉 <span style="color:#00ffcc; font-size:1.6rem; font-weight:bold;">HOÀN THÀNH!</span><br><p style="font-size:1rem; margin-top:10px; color:#cbd5e1;">Đúng ${soCauDungTest}/${mangCauHoiTest.length} câu · ${tyLe}%. ${tyLe >= 80 ? 'Bạn đang nắm khá chắc phần này.' : 'Hãy ôn lại các câu sai rồi thử lần nữa nhé.'}</p><div class="test-section-results">${chiTiet}</div>`;
         if (khungDapAn) khungDapAn.innerHTML = "";
         if (nutChuyenTest) nutChuyenTest.classList.add('an-giau');
+        if (capDoTestChon === 'n1' && cheDoThiThuChuan) {
+            testDaHetGio = true;
+            document.getElementById('pause-test-button').hidden = true;
+            cauHoiTxt?.insertAdjacentHTML('beforeend', HtmlLoiGiaiN1());
+        }
     } else {
         HienThiCauHoiTest();
         LuuTienDoThiThu();
@@ -2026,7 +2039,7 @@ function LaySoCauSai(level = capDoTestChon || 'n5') {
 }
 
 function LuuCauSai(cauHoi, daChon) {
-    if (!cauHoi || !['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon)) return;
+    if (!cauHoi || !['n5', 'n4', 'n3', 'n2', 'n1'].includes(capDoTestChon)) return;
     const khoCu = LaySoCauSai(capDoTestChon);
     const banCu = khoCu.find(item => item.key === cauHoi.key);
     const khoSai = khoCu.filter(item => item.key !== cauHoi.key);
@@ -2056,7 +2069,7 @@ function XoaCauKhoiSoSai(key) {
 }
 
 function LuuKetQuaTest() {
-    if (!['n5', 'n4', 'n3', 'n2'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
+    if (!['n5', 'n4', 'n3', 'n2', 'n1'].includes(capDoTestChon) || cheDoOnCauSai || !mangCauHoiTest.length) return;
     const thongKe = JSON.parse(localStorage.getItem(`${capDoTestChon}_test_stats`) || '{}');
     const muc = thongKe[theLoaiTestChon] || { attempts: 0, correct: 0, total: 0 };
     muc.attempts++; muc.correct += soCauDungTest; muc.total += mangCauHoiTest.length; muc.lastAt = Date.now();
@@ -2164,6 +2177,48 @@ function TaoDeN3Beta(soDe, grammarData, readingPacks) {
     });
 }
 
+function HtmlLoiGiaiN1() {
+    if (capDoTestChon !== 'n1' || !cheDoThiThuChuan || !testDaHetGio) return '';
+    return `<p class="n1-exam-question">Điểm đúng thô để tự luyện, không phải điểm quy đổi hay kết luận đỗ JLPT.</p><details class="n1-exam-review"><summary>Xem đáp án và lời giải tiếng Việt (${mangCauHoiTest.length} câu)</summary>${mangCauHoiTest.map((q, i) => `<details><summary>Câu ${i + 1} · ${q.selectedAnswer === q.dung ? 'Đúng' : q.selectedAnswer === undefined ? 'Chưa trả lời' : 'Sai'}</summary>${q.cauHoiText}<p>Bạn chọn: ${EscapeHtml(q.selectedAnswer ?? 'Chưa trả lời')}</p><p><b>Đáp án: ${EscapeHtml(q.dung)}</b></p><p>${EscapeHtml(q.explanation)}</p></details>`).join('')}</details>`;
+}
+
+// One authored exam: keep every passage and its questions together, shuffle answers only.
+function TaoDeN1TuBoCoDinh(bank) {
+    const quotas = [6, 7, 6, 6, 10, 5, 4, 4, 9, 3, 2, 4, 2];
+    if (bank?.code !== 'N1-BETA-01' || bank.minutes !== 110 || bank.sections?.length !== quotas.length) throw new Error('N1 metadata');
+    let number = 0;
+    const passageIds = new Set();
+    return bank.sections.flatMap((section, sectionIndex) => {
+        if (!section.name || !section.instruction || !Array.isArray(section.groups) || section.groups.flatMap(g => g.questions || []).length !== quotas[sectionIndex]) throw new Error('N1 quota');
+        return section.groups.flatMap(group => {
+            if (sectionIndex >= 6 && (!group.passage || !group.id)) throw new Error('N1 passage');
+            if (group.id) {
+                if (passageIds.has(group.id)) throw new Error('N1 duplicate passage');
+                passageIds.add(group.id);
+            }
+            const start = number + 1;
+            const end = number + group.questions.length;
+            const passage = group.passage ? `<div class="n1-exam-passage"><small>本文 · 問${start}${end > start ? `–${end}` : ''}</small>${EscapeHtml(group.passage)}</div>` : '';
+            return group.questions.map(q => {
+                if (!Array.isArray(q) || q.length !== 4) throw new Error('N1 question');
+                const [question, options, answer, explanation] = q;
+                if (typeof question !== 'string' || !question.trim() || !Array.isArray(options) || options.length !== 4 || options.some(o => typeof o !== 'string' || !o.trim()) || new Set(options).size !== 4 || !Number.isInteger(answer) || answer < 0 || answer > 3 || !explanation) throw new Error('N1 answer');
+                number++;
+                const shuffled = TronLuaChonVaGiuDapAn({ options, answer });
+                const safeQuestion = EscapeHtml(question).replace(/&lt;(\/?)u&gt;/g, '<$1u>');
+                return {
+                    cauHoiText: `${passage}<p class="n1-exam-question">${safeQuestion}</p>`,
+                    dung: shuffled.options[shuffled.answer], luaChon: shuffled.options,
+                    key: `n1-beta01-q${String(number).padStart(2, '0')}`,
+                    skill: sectionIndex >= 7 ? 'reading' : sectionIndex >= 4 ? 'ngu-phap' : 'tu-vung',
+                    section: section.name, instruction: section.instruction,
+                    explanation, passageId: group.id || null
+                };
+            });
+        });
+    });
+}
+
 async function BatDauThiThu(level = 'n5') {
     const baiDangDo = LayTienDoThiThu(level);
     if (baiDangDo) {
@@ -2179,6 +2234,27 @@ async function BatDauThiThu(level = 'n5') {
     document.getElementById('pause-test-button').hidden = true;
     document.getElementById('test-cau-hoi-text').textContent = `Đang tạo đề thi thử ${level.toUpperCase()}…`;
     try {
+        if (level === 'n1') {
+            mangCauHoiTest = [];
+            cheDoThiThuChuan = false;
+            document.getElementById('test-danh-sach-dap-an').innerHTML = '';
+            document.getElementById('vung-nut-chuyen-test').classList.add('an-giau');
+            const response = await fetch('./n1_mock_01.json?v=20260907-1');
+            if (!response.ok) throw new Error('N1 data');
+            const bank = await response.json();
+            const questions = TaoDeN1TuBoCoDinh(bank);
+            if (questions.length !== 68) throw new Error('N1 total');
+            mangCauHoiTest = questions;
+            cheDoThiThuChuan = true;
+            maDeThiThuHienTai = bank.code;
+            indexTestHienTai = 0;
+            HienThiCauHoiTest();
+            BatDauDuongDuaTest(questions.length, bank.minutes * 60);
+            document.getElementById('pause-test-button').hidden = false;
+            document.getElementById('race-message').textContent = `${bank.code} · 68 câu / 13 Mondai / 110 phút · ${bank.notice} Lời giải mở sau khi kết thúc.`;
+            LuuTienDoThiThu();
+            return;
+        }
         if (level === 'n5') {
             const [response, extraResponse] = await Promise.all([fetch('./n5_mock_july_style.json?v=2'), fetch('./n5_mock_bank_extra.json?v=1')]);
             if (!response.ok || !extraResponse.ok) throw new Error('data');
