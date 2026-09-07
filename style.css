@@ -1498,3 +1498,6 @@ transition:
 .n1-exam-review { text-align:left; font-size:1rem; font-weight:400; }
 .n1-exam-review summary { cursor:pointer; color:#67e8f9; padding:12px 0; }
 .n1-exam-review details { padding:10px 0; border-bottom:1px solid #475569; }
+.n1-exam-picker { text-align:left; padding:12px; border:1px solid #334155; border-radius:12px; }
+.n1-exam-picker label { display:block; font-size:1rem; color:#e2e8f0; margin-bottom:10px; }
+.n1-exam-picker select { width:100%; min-height:48px; border:1px solid #64748b; border-radius:8px; background:#0f172a; color:#f8fafc; font:inherit; padding:10px; }
