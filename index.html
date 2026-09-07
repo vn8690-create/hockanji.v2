@@ -9,7 +9,7 @@
                initial-scale=1,
                viewport-fit=cover">
     <title>Học tiếng Nhật · JLPT N5–N1</title>
-    <link rel="stylesheet" href="./style.css?v=20260907-n1-mock-v1">
+    <link rel="stylesheet" href="./style.css?v=20260907-n1-three-sets-v1">
 </head>
 <body>
 
@@ -234,6 +234,14 @@
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('kanji')">🎯 Cách đọc Kanji</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('tu-vung')">📝 Từ Vựng</button>
                     <button class="nut-the-loai-test" onclick="KichHoatLamDe('ngu-phap')">📚 Ngữ Pháp</button>
+                    <div id="n1-exam-picker" class="n1-exam-picker" hidden>
+                        <label for="n1-exam-set">Chọn đề N1 · 68 câu / 110 phút · không nghe</label>
+                        <select id="n1-exam-set" onchange="CapNhatNutDeN1()">
+                            <option value="01">N1 Beta 01</option>
+                            <option value="02">N1 Beta 02 · Mới</option>
+                            <option value="03">N1 Beta 03 · Mới</option>
+                        </select>
+                    </div>
                     <button id="n5-mock-test-button" class="nut-the-loai-test" onclick="BatDauThiThu(capDoTestChon)">🏁 Thi thử tổng hợp</button>
                 </div>
             </section>
@@ -450,6 +458,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260907-n1-mock-v1"></script>
+    <script src="./script.js?v=20260907-n1-three-sets-v1"></script>
 </body>
 </html>
