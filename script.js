@@ -1462,7 +1462,13 @@ async function KichHoatLamDe(theLoai) {
         const response = await fetch(`./${fileNguon}.json?v=${new Date().getTime()}`);
         if (!response.ok) throw new Error();
         const data = await response.json();
-        TaoDeTracNghiem(theLoai === 'kanji' ? LamSachKhoKanji(data, capDoTestChon) : data);
+        if (theLoai === 'kanji' && capDoTestChon === 'n1') {
+            const compoundResponse = await fetch(`./n1_moji_goi.json?v=${new Date().getTime()}`);
+            if (!compoundResponse.ok) throw new Error();
+            TaoDeTracNghiem([...LamSachKhoKanji(data,'n1'), ...await compoundResponse.json()]);
+        } else {
+            TaoDeTracNghiem(theLoai === 'kanji' ? LamSachKhoKanji(data, capDoTestChon) : data);
+        }
     } catch {
         if (cauHoiTxt) cauHoiTxt.innerHTML = `<span style="color:#ef4444; font-size:1.1rem;">❌ Không thể kết nối đề thi file gốc "${fileNguon}.json"!<br>Bro vui lòng thử tải lại trang nhé.</span>`;
     }
@@ -1524,7 +1530,8 @@ function TaoTuKunHoanChinh(item) {
         const reading = normalized.replace(/-/g, '');
         const okurigana = viTriNoi >= 0 ? normalized.slice(viTriNoi + 1).replace(/-/g, '') : '';
         if (!reading) continue;
-        return { word:`${kanji}${okurigana}`, reading, okurigana };
+        const nghia = TachNghiaVaHanViet(item);
+        return { word:`${kanji}${okurigana}`, reading, okurigana, hanViet:nghia.hanViet, meaning:nghia.meaning };
     }
     return null;
 }
@@ -1635,15 +1642,20 @@ function TaoDeTracNghiem(khoGoc) {
         }));
     }
     else if (theLoaiTestChon === 'kanji' && capDoTestChon === 'n1') {
-        const khoTuKun = khoGoc.map(TaoTuKunHoanChinh).filter(Boolean);
-        const danhSach = [...khoTuKun].sort(() => Math.random() - .5).slice(0,20);
+        const khoTuKun = khoGoc.filter(item => !item.word).map(TaoTuKunHoanChinh).filter(Boolean);
+        const khoAmGhep = khoGoc.filter(item => item.word && item.reading).map(item => ({...item,okurigana:''}));
+        const khoLuaChon = [...khoTuKun, ...khoAmGhep];
+        const danhSach = [
+            ...[...khoAmGhep].sort(() => Math.random() - .5).slice(0,12),
+            ...[...khoTuKun].sort(() => Math.random() - .5).slice(0,8)
+        ].sort(() => Math.random() - .5);
         danhSach.forEach((item,index) => mangCauHoiTest.push({
             cauHoiText:`<span class="japanese-test-prompt">＿＿＿のことばの読み方として最もよいものを選んでください。</span><br><span style="font-size:3.2rem;font-weight:900;color:#fff"><u>${item.word}</u></span>`,
             dung:item.reading,
-            luaChon:TaoBonDapAnN1TheoDuoiTu(item,khoTuKun),
-            key:`n1-kanji-kun-${item.word}-${index}`,
+            luaChon:TaoBonDapAnN1TheoDuoiTu(item,khoLuaChon),
+            key:`n1-kanji-word-${item.id || item.word}-${index}`,
             skill:'kanji',
-            explanation:`<b>${EscapeHtml(item.word)}（${EscapeHtml(item.reading)}）</b>`
+            explanation:`<b>${EscapeHtml(item.word)}（${EscapeHtml(item.reading)}）</b>${item.hanViet ? ` — <span class="answer-han-viet">${EscapeHtml(item.hanViet)}</span>` : ''}${item.meaning ? ` — ${EscapeHtml(item.meaning)}` : ''}`
         }));
     }
     else {
