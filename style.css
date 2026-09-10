@@ -1389,6 +1389,10 @@ transition:
 .section-heading h2 { margin:5px 0; font-size:1.65rem; }
 .section-heading p { color:#94a3b8; font-size:.82rem; line-height:1.55; }
 .study-grid { display:grid; gap:12px; }
+.vocab-level-grid { margin-top:20px; }
+.vocab-level-grid .study-card p { font-size:.9rem; line-height:1.5; }
+.vocab-level-grid .study-card>span { font-family:inherit; font-size:1.4rem; }
+.vocab-actions button:disabled { opacity:.5; cursor:wait; }
 .study-card { display:grid; grid-template-columns:56px 1fr auto; align-items:center; gap:13px; width:100%; padding:17px; color:#fff; text-align:left; background:#101827; border:1px solid rgba(148,163,184,.14); border-radius:17px; cursor:pointer; }
 .study-card>span { display:grid; place-items:center; width:54px; height:54px; color:#00ffcc; background:rgba(0,255,204,.08); border:1px solid rgba(0,255,204,.22); border-radius:15px; font:700 1.8rem serif; }
 .study-card small,.reading-lesson-card small { color:#64748b; font-size:.58rem; font-weight:900; letter-spacing:.11em; }
