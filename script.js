@@ -140,6 +140,7 @@ let n2VocabQuizIndex = 0;
 let n2VocabQuizScore = 0;
 let n2VocabQuizAnswered = false;
 let vocabStudyLevel = 'n2';
+let vocabLoadRequest = 0;
 
 function KhoaNgayHienTai(date = new Date()) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -2593,40 +2594,82 @@ function EscapeHtml(value = '') {
     return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 
+function MoMenuTuVung() {
+    vocabLoadRequest++;
+    ChuyenTab('man-vocab-levels');
+}
+
 async function MoKhoTuVungN2() {
     return MoKhoTuVungJLPT('n2');
 }
 
+function ChuanHoaKhoTuVung(items) {
+    if (!Array.isArray(items) || !items.length) throw new Error('Kho từ vựng trống');
+    const ids = new Set();
+    return items.map(item => {
+        if (!item.id || ids.has(item.id) || !item.word || !item.reading || !item.meaning) throw new Error('Dữ liệu từ vựng không hợp lệ');
+        ids.add(item.id);
+        return {topicId:'core', topic:'Từ vựng cốt lõi', hanViet:'', pos:'', example:'', translation:'', collocation:'', synonym:'', contrast:'', ...item};
+    });
+}
+
 async function MoKhoTuVungJLPT(level = 'n2') {
-    vocabStudyLevel = level.toLowerCase();
+    if (!['n5','n4','n3','n2','n1'].includes(level)) return;
+    const request = ++vocabLoadRequest;
+    vocabStudyLevel = level;
     n2VocabData = [];
     n2VocabSessionIds = null;
     ChuyenTab('man-n2-vocab');
-    const label = vocabStudyLevel.toUpperCase();
+    const label = level.toUpperCase();
+    document.getElementById('vocab-level-select').value = level;
     document.getElementById('vocab-level-eyebrow').textContent = `文字・語彙・${label}`;
     document.getElementById('vocab-level-title').textContent = `Kho từ vựng ${label}`;
     document.querySelector('#man-n2-vocab-quiz h2').textContent = `Kiểm tra nhanh ${label}`;
-    document.getElementById('vocab-back-button').onclick = () => vocabStudyLevel === 'n4' ? MoLoTrinhN4() : ChuyenTab('man-study-hub');
+    document.getElementById('vocab-back-button').onclick = MoMenuTuVung;
+    document.getElementById('n2-vocab-search').value = '';
+    document.getElementById('n2-vocab-status').value = 'all';
+    document.getElementById('n2-vocab-topic').innerHTML = '<option value="all">Tất cả chủ đề</option>';
+    document.getElementById('n2-vocab-topic').value = 'all';
+    document.getElementById('vocab-total-label').textContent = '/0 đã nhớ';
+    document.getElementById('n2-vocab-result-count').textContent = 'Đang tải dữ liệu…';
+    CapNhatTongQuanTuVungN2();
+    document.querySelectorAll('#man-n2-vocab .vocab-actions button').forEach(button => button.disabled = true);
     document.getElementById('n2-vocab-list').innerHTML = `<div class="reading-loading">Đang mở kho 文字・語彙 ${label}…</div>`;
     try {
-        const response = await fetch(`./${vocabStudyLevel}_moji_goi.json?v=1`);
-        if (!response.ok) throw new Error('Không tải được kho từ vựng');
-        n2VocabData = await response.json();
+        let items;
+        if (level === 'n3') {
+            items = N3_MOJI_BANK.map(([word,reading,meaning,example],index) => ({
+                id:`n3-vocab-${String(index+1).padStart(3,'0')}`,word,reading,
+                meaning:word === '乾く' ? 'khô' : meaning,
+                example:word === '乾く' ? '洗濯物がよく乾く。' : word === '確か' ? 'この情報は確かです。' : example
+            }));
+        } else {
+            const response = await fetch(`./${level}_moji_goi.json?v=20260910-menu-v1`);
+            if (!response.ok) throw new Error('Không tải được kho từ vựng');
+            items = await response.json();
+        }
+        if (request !== vocabLoadRequest) return;
+        n2VocabData = ChuanHoaKhoTuVung(items);
         const select = document.getElementById('n2-vocab-topic');
         const topics = [...new Map(n2VocabData.map(item => [item.topicId, item.topic])).entries()];
         select.innerHTML = '<option value="all">Tất cả chủ đề</option>' + topics.map(([id,name]) => `<option value="${EscapeHtml(id)}">${EscapeHtml(name)}</option>`).join('');
+        select.value = 'all';
         document.getElementById('vocab-total-label').textContent = `/${n2VocabData.length} đã nhớ`;
+        document.querySelectorAll('#man-n2-vocab .vocab-actions button').forEach(button => button.disabled = false);
         HienThiKhoTuVungN2();
     } catch {
-        document.getElementById('n2-vocab-list').innerHTML = `<div class="reading-error">Không tải được kho 文字・語彙 ${label}. Hãy tải lại trang và thử lại.</div>`;
+        if (request !== vocabLoadRequest) return;
+        n2VocabData = [];
+        document.getElementById('n2-vocab-result-count').textContent = 'Chưa tải được dữ liệu';
+        document.getElementById('n2-vocab-list').innerHTML = `<div class="reading-error">Không tải được kho ${label}. <button onclick="MoKhoTuVungJLPT('${level}')">Thử lại</button></div>`;
     }
 }
 
 function CapNhatTongQuanTuVungN2() {
     const mastered = LayTienDoTuVungN2();
-    const total = n2VocabData.length || (vocabStudyLevel === 'n4' ? 60 : 120);
-    const count = n2VocabData.length ? n2VocabData.filter(item => mastered.has(item.id)).length : mastered.size;
-    const percent = Math.min(100, Math.round(count / total * 100));
+    const total = n2VocabData.length;
+    const count = n2VocabData.filter(item => mastered.has(item.id)).length;
+    const percent = total ? Math.min(100, Math.round(count / total * 100)) : 0;
     const number = document.getElementById('n2-vocab-mastered');
     const ring = document.getElementById('n2-vocab-progress-ring');
     const bar = document.getElementById('n2-vocab-progress-bar');
@@ -2664,8 +2707,8 @@ function HienThiKhoTuVungN2() {
                 <i>${done ? '✓' : '＋'}</i>
             </button>
             <div class="vocab-detail an-giau">
-                <p class="vocab-example"><b>${EscapeHtml(item.example)}</b><span>${EscapeHtml(item.translation)}</span></p>
-                <div class="vocab-relations"><span><small>TỪ LOẠI</small>${EscapeHtml(item.pos)}</span><span><small>CỤM HAY GẶP</small>${EscapeHtml(item.collocation)}</span>${item.synonym ? `<span><small>GẦN NGHĨA</small>${EscapeHtml(item.synonym)}</span>` : ''}${item.contrast ? `<span><small>DỄ PHÂN BIỆT</small>${EscapeHtml(item.contrast)}</span>` : ''}</div>
+                ${item.example ? `<p class="vocab-example"><b>${EscapeHtml(item.example)}</b>${item.translation ? `<span>${EscapeHtml(item.translation)}</span>` : ''}</p>` : ''}
+                <div class="vocab-relations">${item.pos ? `<span><small>TỪ LOẠI</small>${EscapeHtml(item.pos)}</span>` : ''}${item.collocation ? `<span><small>CỤM HAY GẶP</small>${EscapeHtml(item.collocation)}</span>` : ''}${item.synonym ? `<span><small>GẦN NGHĨA</small>${EscapeHtml(item.synonym)}</span>` : ''}${item.contrast ? `<span><small>DỄ PHÂN BIỆT</small>${EscapeHtml(item.contrast)}</span>` : ''}</div>
                 <div class="vocab-item-actions"><button onclick="DocTuVungN2('${EscapeHtml(item.id)}')">🔊 Nghe từ & ví dụ</button><button class="remember ${done ? 'active' : ''}" onclick="DanhDauNhoTuVung('${EscapeHtml(item.id)}')">${done ? '✓ Đã nhớ' : '○ Đánh dấu đã nhớ'}</button></div>
             </div>
         </article>`;
@@ -2727,8 +2770,11 @@ function TaoBonLuaChon(dapAn, ungVien) {
 }
 
 function TaoCauHoiTuVung(item, index) {
-    const type = ['reading','meaning','context'][index % 3];
-    const sameTopic = n2VocabData.filter(word => word.id !== item.id && word.topicId === item.topicId);
+    const hasContext = Boolean(item.cloze || (item.example && item.example.includes(item.word)));
+    const types = hasContext ? ['reading','meaning','context'] : ['reading','meaning'];
+    const type = types[index % types.length];
+    const topicCandidates = n2VocabData.filter(word => word.id !== item.id && word.topicId === item.topicId);
+    const sameTopic = topicCandidates.length >= 3 ? topicCandidates : n2VocabData.filter(word => word.id !== item.id);
     if (type === 'reading') {
         const options = TaoBonLuaChon(item.reading,n2VocabData.filter(word => word.id !== item.id).map(word => word.reading));
         return {item,type,label:'CÁCH ĐỌC',prompt:'Chọn cách đọc đúng',word:item.word,options,answer:options.indexOf(item.reading)};
