@@ -9,7 +9,7 @@
                initial-scale=1,
                viewport-fit=cover">
     <title>Học tiếng Nhật · JLPT N5–N1</title>
-    <link rel="stylesheet" href="./style.css?v=20260907-n1-three-sets-v1">
+    <link rel="stylesheet" href="./style.css?v=20260910-vocab-menu-v1">
 </head>
 <body>
 
@@ -73,7 +73,7 @@
                 <button class="n5-path-banner n4-path-banner" onclick="MoLoTrinhN4()"><span class="path-badge">N4</span><span><small>LỘ TRÌNH TIẾP THEO</small><b>Kanji mở rộng → Ngữ pháp → Đọc hiểu</b><em id="n4-path-summary">Bắt đầu hành trình N4</em></span><strong>→</strong></button>
                 <div class="study-grid">
                     <button class="study-card kanji-card" onclick="ChuyenTab('man-kanji')"><span>漢</span><div><small>TỪ VỰNG & VIẾT</small><h3>Kanji</h3><p>Flashcard, phát âm và luyện viết tay.</p></div><b>→</b></button>
-                    <button class="study-card vocab-card" onclick="MoKhoTuVungN2()"><span>語</span><div><small>文字・語彙 N2</small><h3>Từ vựng</h3><p>120 từ theo chủ đề, ví dụ và kiểm tra nhanh.</p></div><b>→</b></button>
+                    <button class="study-card vocab-card" onclick="MoMenuTuVung()"><span>語</span><div><small>文字・語彙 · N5–N1</small><h3>Từ vựng</h3><p>Chọn cấp độ, học cách đọc, nghĩa và kiểm tra nhanh.</p></div><b>→</b></button>
                     <button class="study-card grammar-card" onclick="ChuyenTab('man-grammar-levels')"><span>文</span><div><small>MẪU CÂU</small><h3>Ngữ pháp</h3><p>Cấu trúc, ví dụ và furigana trực quan.</p></div><b>→</b></button>
                     <button class="study-card reading-card" onclick="MoCapDoDocHieu()"><span>読</span><div><small>LUYỆN ĐỌC</small><h3>Đọc hiểu</h3><p>Bài đọc ngắn, câu hỏi và giải thích.</p></div><b>→</b></button>
                     <button class="study-card writing-test-card" onclick="MoManThiViet()"><span>書</span><div><small>CHẤM ĐIỂM NÉT</small><h3>Thi viết Kanji</h3><p>Viết từ trí nhớ, nhận điểm 0–100.</p></div><b>→</b></button>
@@ -109,11 +109,23 @@
                 <p class="readiness-disclaimer">Điểm sẵn sàng là chỉ báo luyện tập trong app, không phải cam kết kết quả kỳ thi chính thức.</p>
             </section>
 
+            <section id="man-vocab-levels" class="man-hinh">
+                <div class="thanh-dieu-huong"><div><span class="eyebrow">文字・語彙</span><h2>Chọn cấp độ từ vựng</h2></div><button class="nut-quay-lai" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
+                <p>Học cách đọc, nghĩa tiếng Việt và ôn từ chưa nhớ. Tiến độ được lưu riêng cho từng cấp.</p>
+                <div class="study-grid vocab-level-grid">
+                    <button class="study-card" onclick="MoKhoTuVungJLPT('n5')"><span>N5</span><div><h3>N5 · Sơ cấp</h3><p>30 từ khởi đầu · Đời sống, ăn uống, học tập</p></div><b>→</b></button>
+                    <button class="study-card" onclick="MoKhoTuVungJLPT('n4')"><span>N4</span><div><h3>N4 · Sơ cấp mở rộng</h3><p>Từ vựng theo ngữ cảnh và câu ví dụ</p></div><b>→</b></button>
+                    <button class="study-card" onclick="MoKhoTuVungJLPT('n3')"><span>N3</span><div><h3>N3 · Trung cấp</h3><p>Từ vựng và câu mẫu từ kho ôn tập hiện có</p></div><b>→</b></button>
+                    <button class="study-card" onclick="MoKhoTuVungJLPT('n2')"><span>N2</span><div><h3>N2 · Trung cao cấp</h3><p>Học theo chủ đề, ví dụ và cụm từ thường gặp</p></div><b>→</b></button>
+                    <button class="study-card" onclick="MoKhoTuVungJLPT('n1')"><span>N1</span><div><h3>N1 · Cao cấp</h3><p>Từ ghép, cách đọc và nghĩa tiếng Việt</p></div><b>→</b></button>
+                </div>
+            </section>
+
             <section id="man-n2-vocab" class="man-hinh n2-vocab-screen">
                 <div class="thanh-dieu-huong"><div><span class="eyebrow" id="vocab-level-eyebrow">文字・語彙・N2</span><h2 id="vocab-level-title">Kho từ vựng N2</h2></div><button class="nut-quay-lai" id="vocab-back-button" onclick="ChuyenTab('man-study-hub')">QUAY LẠI</button></div>
                 <article class="vocab-overview">
                     <div class="vocab-progress-ring" id="n2-vocab-progress-ring"><strong id="n2-vocab-mastered">0</strong><small id="vocab-total-label">/120 đã nhớ</small></div>
-                    <div><small>HỌC THEO NGỮ CẢNH</small><h3>12 buổi × 10 từ cốt lõi</h3><p>Cách đọc, âm Hán Việt, nghĩa, câu ví dụ, từ gần nghĩa và cụm từ thường đi cùng.</p><div class="vocab-progress"><i id="n2-vocab-progress-bar"></i></div></div>
+                    <div><small>TỪ VỰNG JLPT</small><h3>Mỗi buổi học 10 từ</h3><p>Cách đọc và nghĩa tiếng Việt; ví dụ và cụm từ khi có trong kho.</p><div class="vocab-progress"><i id="n2-vocab-progress-bar"></i></div></div>
                 </article>
                 <div class="vocab-actions">
                     <button onclick="Hoc10TuTiepTheo()">▶ Học 10 từ tiếp theo</button>
@@ -121,6 +133,7 @@
                     <button class="secondary" onclick="LocTuVungChuaNho()">↻ Ôn từ chưa nhớ</button>
                 </div>
                 <div class="vocab-controls">
+                    <label><span>Cấp độ</span><select id="vocab-level-select" onchange="MoKhoTuVungJLPT(this.value)"><option value="n5">N5</option><option value="n4">N4</option><option value="n3">N3</option><option value="n2">N2</option><option value="n1">N1</option></select></label>
                     <label><span>Tìm từ</span><input id="n2-vocab-search" type="search" placeholder="Kanji, kana hoặc nghĩa Việt…" oninput="HienThiKhoTuVungN2()"></label>
                     <label><span>Chủ đề</span><select id="n2-vocab-topic" onchange="HienThiKhoTuVungN2()"><option value="all">Tất cả chủ đề</option></select></label>
                     <label><span>Trạng thái</span><select id="n2-vocab-status" onchange="HienThiKhoTuVungN2()"><option value="all">Tất cả</option><option value="new">Chưa nhớ</option><option value="mastered">Đã nhớ</option></select></label>
@@ -460,6 +473,6 @@
         </nav>
     </div>
 
-    <script src="./script.js?v=20260910-n1-five-sets-v2"></script>
+    <script src="./script.js?v=20260910-vocab-menu-v1"></script>
 </body>
 </html>
