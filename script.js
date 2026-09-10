@@ -2187,7 +2187,7 @@ function HtmlLoiGiaiN1() {
 
 function LayMaDeN1DuocChon() {
     const selected = document.getElementById('n1-exam-set')?.value;
-    return ['01', '02', '03'].includes(selected) ? selected : '01';
+    return ['01', '02', '03', '04', '05'].includes(selected) ? selected : '01';
 }
 
 function CapNhatNutDeN1() {
@@ -2198,7 +2198,7 @@ function CapNhatNutDeN1() {
 // Each authored exam stays intact; shuffle its answer options only.
 function TaoDeN1TuBoCoDinh(bank) {
     const quotas = [6, 7, 6, 6, 10, 5, 4, 4, 9, 3, 2, 4, 2];
-    if (!['N1-BETA-01', 'N1-BETA-02', 'N1-BETA-03'].includes(bank?.code) || bank.minutes !== 110 || bank.sections?.length !== quotas.length) throw new Error('N1 metadata');
+    if (!['N1-BETA-01', 'N1-BETA-02', 'N1-BETA-03', 'N1-BETA-04', 'N1-BETA-05'].includes(bank?.code) || bank.minutes !== 110 || bank.sections?.length !== quotas.length) throw new Error('N1 metadata');
     let number = 0;
     const passageIds = new Set();
     return bank.sections.flatMap((section, sectionIndex) => {
@@ -2253,7 +2253,7 @@ async function BatDauThiThu(level = 'n5') {
             document.getElementById('test-danh-sach-dap-an').innerHTML = '';
             document.getElementById('vung-nut-chuyen-test').classList.add('an-giau');
             const setNumber = LayMaDeN1DuocChon();
-            const response = await fetch(`./n1_mock_${setNumber}.json?v=20260907-sets123-v1`);
+            const response = await fetch(`./n1_mock_${setNumber}.json?v=20260910-sets12345-v1`);
             if (!response.ok) throw new Error('N1 data');
             const bank = await response.json();
             if (bank.code !== `N1-BETA-${setNumber}`) throw new Error('N1 set mismatch');
