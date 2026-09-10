@@ -7,8 +7,8 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname,'..');
 const source = fs.readFileSync(path.join(root,'script.js'),'utf8');
 const setNumber = process.argv[2] || '01';
-assert(['01','02','03'].includes(setNumber));
-const banks = Object.fromEntries(['01','02','03'].map(n=>[n,JSON.parse(fs.readFileSync(path.join(root,`n1_mock_${n}.json`),'utf8'))]));
+assert(['01','02','03','04','05'].includes(setNumber));
+const banks = Object.fromEntries(['01','02','03','04','05'].map(n=>[n,JSON.parse(fs.readFileSync(path.join(root,`n1_mock_${n}.json`),'utf8'))]));
 const bank = banks[setNumber];
 const store = new Map();
 const storage = {getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
@@ -40,7 +40,9 @@ function environment() {
     const starOrders={
         '01':[[3,1,0,2],[1,2,3,0],[2,1,3,0],[2,3,1,0],[3,1,0,2]],
         '02':[[1,0,3,2],[1,3,2,0],[0,2,3,1],[3,2,1,0],[1,3,0,2]],
-        '03':[[2,1,3,0],[2,3,0,1],[2,3,1,0],[3,1,0,2],[1,3,0,2]]
+        '03':[[2,1,3,0],[2,3,0,1],[2,3,1,0],[3,1,0,2],[1,3,0,2]],
+        '04':[[1,2,0,3],[3,1,0,2],[1,3,0,2],[3,1,0,2],[3,1,0,2]],
+        '05':[[3,1,0,2],[3,1,0,2],[2,0,3,1],[2,0,1,3],[2,0,1,3]]
     }[setNumber];
     raw.slice(35,40).forEach((q,i)=>assert.equal(q[2],starOrders[i][2]));
     let env=environment();env.ctx.bank=bank;
@@ -88,14 +90,14 @@ function environment() {
     assert.equal(env.get('n5-mock-test-button').textContent,'🏁 Thi thử tổng hợp');
     const broken=clean(bank);broken.sections[0].groups[0].questions.pop();env.ctx.bank=broken;
     assert.throws(()=>env.run('TaoDeN1TuBoCoDinh(bank)'),/quota/);
-    // All three sets use independent IDs and retain their own passage/question order.
+    // All five sets use independent IDs and retain their own passage/question order.
     const ids=new Set();
     for(const current of Object.values(banks)){
         env.ctx.bank=current;
         for(const q of env.run('TaoDeN1TuBoCoDinh(bank)')) {assert(!ids.has(q.key));ids.add(q.key);}
     }
-    assert.equal(ids.size,204);
+    assert.equal(ids.size,340);
     assert.equal(env.get('n1-exam-picker').hidden,true);
-    console.log(`${bank.code} PASS: quota 68/13; five ★ keys; 100 answer shuffles; intact passages; correct selected set; answer changes; reload/resume; 67/68 grading; mistakes; review gating; expiry; N4 regression; invalid quota rejected; 204 distinct IDs.`);
+    console.log(`${bank.code} PASS: quota 68/13; five ★ keys; 100 answer shuffles; intact passages; correct selected set; answer changes; reload/resume; 67/68 grading; mistakes; review gating; expiry; N4 regression; invalid quota rejected; 340 distinct IDs.`);
     console.log('NOT RUN: real-browser layout tests (Chromium is unavailable).');
 })().catch(e=>{console.error(e);process.exitCode=1;});
