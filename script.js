@@ -2253,7 +2253,7 @@ async function BatDauThiThu(level = 'n5') {
             document.getElementById('test-danh-sach-dap-an').innerHTML = '';
             document.getElementById('vung-nut-chuyen-test').classList.add('an-giau');
             const setNumber = LayMaDeN1DuocChon();
-            const response = await fetch(`./n1_mock_${setNumber}.json?v=20260910-sets12345-v1`);
+            const response = await fetch(`./n1_mock_${setNumber}.json?v=20260910-sets12345-v2`);
             if (!response.ok) throw new Error('N1 data');
             const bank = await response.json();
             if (bank.code !== `N1-BETA-${setNumber}`) throw new Error('N1 set mismatch');
